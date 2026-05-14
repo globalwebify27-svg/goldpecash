@@ -119,7 +119,7 @@ export default function RevenueChart({ data: allData }: { data?: any }) {
                 cx={x}
                 cy={y}
                 r="4"
-                fill="white"
+                fill="var(--background)"
                 stroke="var(--color-primary)"
                 strokeWidth="2"
                 className="animate-in zoom-in duration-500 delay-300"
