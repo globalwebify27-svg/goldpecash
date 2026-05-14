@@ -48,22 +48,22 @@ export default function LoginPage() {
               className="w-32 h-auto drop-shadow-2xl hover:scale-105 transition-transform duration-500"
             />
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mt-2">
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-950 dark:text-white mt-2">
             Gol Pe <span className="text-primary">Cash</span>
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Secure Gold Purchase Portal</p>
+          <p className="text-slate-600 dark:text-slate-400 mt-2 font-medium">Secure Gold Purchase Portal</p>
         </div>
 
         <div className="premium-card">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="p-3 text-sm text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg font-medium">
                 {error}
               </div>
             )}
             
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              <label className="text-sm font-bold text-slate-800 dark:text-slate-200">
                 Email Address
               </label>
               <input
@@ -71,13 +71,13 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none text-slate-900 dark:text-white"
                 placeholder="admin@goldpecash.com"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              <label className="text-sm font-bold text-slate-800 dark:text-slate-200">
                 Password
               </label>
               <div className="relative">
@@ -86,7 +86,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-4 pr-12 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
+                  className="w-full pl-4 pr-12 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none text-slate-900 dark:text-white"
                   placeholder="••••••••"
                 />
                 <button
@@ -102,10 +102,10 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full btn-primary py-3 flex items-center justify-center"
+              className="w-full btn-primary py-3.5 flex items-center justify-center text-lg shadow-xl shadow-gold-500/20"
             >
               {loading ? (
-                <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-6 h-6 border-2 border-slate-900/30 border-t-slate-900 rounded-full animate-spin" />
               ) : (
                 "Sign In"
               )}
@@ -113,13 +113,13 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <a href="#" className="text-sm text-primary hover:underline font-medium">
+            <a href="#" className="text-sm text-primary hover:underline font-bold">
               Forgot password?
             </a>
           </div>
         </div>
         
-        <p className="text-center text-slate-500 text-xs mt-8">
+        <p className="text-center text-slate-600 dark:text-slate-500 text-xs mt-8 font-medium">
           &copy; {new Date().getFullYear()} Gol Pe Cash. All rights reserved.
         </p>
       </div>

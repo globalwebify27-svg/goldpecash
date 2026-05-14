@@ -3,6 +3,7 @@
 import { Bell, Search, User, Menu, X } from "lucide-react";
 import { useState } from "react";
 import Sidebar from "./Sidebar";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Header({ user }: { user: any }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -29,6 +30,7 @@ export default function Header({ user }: { user: any }) {
         </div>
 
       <div className="flex items-center gap-4">
+        <ThemeToggle />
         <button className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all relative">
           <Bell className="w-5 h-5" />
           <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-950"></span>

@@ -192,7 +192,7 @@ export default function NewTransactionPage() {
           <div key={step} className="relative z-10 flex flex-col items-center">
             <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300 ${
               index <= currentStep 
-                ? "bg-primary text-white premium-shadow" 
+                ? "bg-primary text-primary-foreground premium-shadow" 
                 : "bg-slate-200 dark:bg-slate-800 text-slate-500"
             }`}>
               {index + 1}

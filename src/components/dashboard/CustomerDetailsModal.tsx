@@ -15,7 +15,7 @@ export default function CustomerDetailsModal({ customer, onClose }: CustomerDeta
         <div className="p-8 bg-slate-50/50 dark:bg-slate-800/30 border-b border-slate-100 dark:border-slate-800 relative">
           <button 
             onClick={onClose}
-            className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm"
+            className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-900 dark:hover:text-primary-foreground rounded-xl hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm"
           >
             <X className="w-5 h-5" />
           </button>

@@ -107,7 +107,7 @@ export default function AadhaarStep({ onNext, updateData, data, jumpToStep }: an
       {showSearchModal && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-md shadow-2xl relative animate-in zoom-in-95 duration-200">
-            <button onClick={() => setShowSearchModal(false)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+            <button onClick={() => setShowSearchModal(false)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-900 dark:hover:text-primary-foreground rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
               <X className="w-5 h-5" />
             </button>
             <h3 className="text-xl font-bold mb-2">Search Customer</h3>
@@ -164,7 +164,7 @@ export default function AadhaarStep({ onNext, updateData, data, jumpToStep }: an
                 <button
                   onClick={handleSendOtp}
                   disabled={loading}
-                  className="absolute right-2 top-2 px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-bold hover:brightness-110 disabled:opacity-50"
+                  className="absolute right-2 top-2 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-bold hover:brightness-110 disabled:opacity-50"
                 >
                   {loading ? "Sending..." : "Send OTP"}
                 </button>

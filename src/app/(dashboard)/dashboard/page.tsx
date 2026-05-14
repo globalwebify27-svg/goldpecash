@@ -65,7 +65,7 @@ export default async function DashboardPage() {
         {stats.map((stat) => (
           <div key={stat.name} className="premium-card relative overflow-hidden group">
             <div className="flex justify-between items-start mb-4">
-              <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-900 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+              <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-900 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                 <stat.icon className="w-6 h-6" />
               </div>
               <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg ${

@@ -61,11 +61,11 @@ export default function Sidebar({ user, isMobile }: { user: any; isMobile?: bool
               href={link.href}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                 isActive 
-                  ? "bg-primary text-white premium-shadow font-semibold" 
+                  ? "bg-primary text-primary-foreground premium-shadow font-semibold" 
                   : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900"
               }`}
             >
-              <link.icon className={`w-5 h-5 ${isActive ? "text-white" : "text-slate-500"}`} />
+              <link.icon className={`w-5 h-5 ${isActive ? "text-primary-foreground" : "text-slate-500"}`} />
               {link.name}
             </Link>
           );

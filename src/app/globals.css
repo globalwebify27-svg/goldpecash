@@ -46,19 +46,19 @@
 @layer base {
   :root {
     --background: #ffffff;
-    --foreground: #0f172a;
+    --foreground: #020617;
     --card: #ffffff;
-    --card-foreground: #0f172a;
+    --card-foreground: #020617;
     --popover: #ffffff;
-    --popover-foreground: #0f172a;
+    --popover-foreground: #020617;
     --primary: #ffb10a;
-    --primary-foreground: #ffffff;
+    --primary-foreground: #020617;
     --secondary: #f1f5f9;
-    --secondary-foreground: #0f172a;
+    --secondary-foreground: #020617;
     --muted: #f1f5f9;
-    --muted-foreground: #64748b;
+    --muted-foreground: #475569;
     --accent: #f8fafc;
-    --accent-foreground: #0f172a;
+    --accent-foreground: #020617;
     --destructive: #ef4444;
     --destructive-foreground: #f8fafc;
     --border: #e2e8f0;
@@ -75,7 +75,7 @@
     --popover: #0f172a;
     --popover-foreground: #f8fafc;
     --primary: #ffb10a;
-    --primary-foreground: #ffffff;
+    --primary-foreground: #020617;
     --secondary: #1e293b;
     --secondary-foreground: #f8fafc;
     --muted: #1e293b;
@@ -97,6 +97,9 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  input::placeholder, textarea::placeholder {
+    @apply text-slate-400 dark:text-slate-500;
   }
 }
 

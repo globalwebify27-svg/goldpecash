@@ -30,7 +30,7 @@ export default async function BranchesPage() {
         {branches.length > 0 ? branches.map((branch) => (
           <div key={branch.id} className="premium-card group hover:border-primary/50 transition-all">
             <div className="flex justify-between items-start mb-6">
-              <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-900 text-primary group-hover:bg-primary group-hover:text-white transition-all">
+              <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-900 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all">
                 <Building2 className="w-6 h-6" />
               </div>
               <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${
