@@ -1,10 +1,119 @@
 "use client";
 
-import { UserCircle, Mail, Phone, MapPin, Loader2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { UserCircle, Mail, Phone, MapPin, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { useSession } from "next-auth/react";
 
 export default function CustomerDetailsStep({ onNext, onPrev, updateData, data, loading }: any) {
+  const { data: session } = useSession();
+  const userRole = (session?.user as any)?.role;
+  const isSuperAdmin = userRole === "SUPER_ADMIN";
+
+  const initialMobileRef = useRef(data.mobile || "");
+  const [isEditing, setIsEditing] = useState(false);
+  const [verifiedState, setVerifiedState] = useState(
+    !!(data.mobile && data.customerId && data.mobile === initialMobileRef.current)
+  );
+
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [otpError, setOtpError] = useState("");
+  const [otpSuccess, setOtpSuccess] = useState("");
+  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
+
+  // Auto-verify if the mobile number is the same as retrieved database mobile, unless editing
+  const isVerified = !isEditing && ((data.mobile && data.mobile === initialMobileRef.current && initialMobileRef.current !== "") || verifiedState);
+
+  // Reset verification if mobile changes (and isn't the initial database mobile)
+  useEffect(() => {
+    if (data.mobile !== initialMobileRef.current) {
+      setVerifiedState(false);
+      setOtpSent(false);
+      setConfirmationResult(null);
+    }
+  }, [data.mobile]);
+
+  // Clean up recaptcha verifier on unmount
+  useEffect(() => {
+    return () => {
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear();
+        recaptchaVerifierRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleSendOtp = async () => {
+    if (!data.mobile || data.mobile.length < 10) {
+      setOtpError("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+    setSendingOtp(true);
+    setOtpError("");
+    setOtpSuccess("");
+
+    try {
+      if (!recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, "recaptcha-container", {
+          size: "invisible",
+        });
+      }
+
+      const formattedPhone = data.mobile.startsWith("+") ? data.mobile : `+91${data.mobile}`;
+      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifierRef.current);
+      setConfirmationResult(confirmation);
+      setOtpSent(true);
+      setOtpSuccess("OTP sent successfully to " + formattedPhone);
+    } catch (err: any) {
+      console.error("Firebase sendOtp error:", err);
+      setOtpError(err.message || "Failed to send OTP. Please check your configuration.");
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear();
+        recaptchaVerifierRef.current = null;
+      }
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (otp.length !== 6) {
+      setOtpError("Please enter a 6-digit OTP code.");
+      return;
+    }
+    setVerifyingOtp(true);
+    setOtpError("");
+    setOtpSuccess("");
+
+    try {
+      if (!confirmationResult) {
+        setOtpError("No active verification session. Send OTP again.");
+        return;
+      }
+      await confirmationResult.confirm(otp);
+      setVerifiedState(true);
+      setIsEditing(false);
+      setOtpSuccess("Mobile number verified successfully!");
+      setOtpSent(false);
+    } catch (err: any) {
+      console.error("Firebase verifyOtp error:", err);
+      setOtpError("Invalid OTP code. Please try again.");
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isVerified) {
+      setOtpError("Please verify your mobile number first.");
+      return;
+    }
     onNext();
   };
 
@@ -33,18 +142,124 @@ export default function CustomerDetailsStep({ onNext, onPrev, updateData, data, 
   
           <div className="space-y-2">
             <label className="text-sm font-medium">Mobile Number</label>
-            <div className="relative">
-              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="tel"
-                required
-                value={data.mobile || ""}
-                onChange={(e) => updateData({ mobile: e.target.value })}
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary outline-none"
-                placeholder="9999999999"
-              />
+            <div className="relative flex gap-2">
+              <div className="relative flex-1">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="tel"
+                  required
+                  value={data.mobile || ""}
+                  disabled={isVerified}
+                  onChange={(e) => updateData({ mobile: e.target.value.replace(/\D/g, "") })}
+                  className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary outline-none disabled:bg-slate-100 dark:disabled:bg-slate-900/50 disabled:opacity-80"
+                  placeholder="9999999999"
+                />
+                {isVerified && (
+                  <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500" />
+                )}
+              </div>
+
+              {!isVerified && !otpSent && (
+                <button
+                  type="button"
+                  onClick={handleSendOtp}
+                  disabled={sendingOtp || !data.mobile || data.mobile.length < 10}
+                  className="px-4 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-bold hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all shrink-0"
+                >
+                  {sendingOtp ? "Sending..." : "Send OTP"}
+                </button>
+              )}
+
+              {!isVerified && !otpSent && isEditing && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    updateData({ mobile: initialMobileRef.current });
+                    setIsEditing(false);
+                    setOtpError("");
+                    setOtpSuccess("");
+                  }}
+                  className="px-4 py-3 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300 shrink-0"
+                >
+                  Cancel
+                </button>
+              )}
+
+              {isVerified && isSuperAdmin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditing(true);
+                    setVerifiedState(false);
+                    setOtpSent(false);
+                    setConfirmationResult(null);
+                  }}
+                  className="px-4 py-3 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300 shrink-0"
+                >
+                  Change
+                </button>
+              )}
             </div>
           </div>
+
+          <div id="recaptcha-container"></div>
+
+          {otpSent && !isVerified && (
+            <div className="md:col-span-2 space-y-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 animate-in slide-in-from-top-2 duration-300">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Enter 6-digit OTP</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                    placeholder="••••••"
+                    className="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary outline-none tracking-[1.5em] font-bold text-center"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleVerifyOtp}
+                    disabled={verifyingOtp || otp.length !== 6}
+                    className="px-6 py-3 bg-green-600 text-white rounded-xl text-sm font-bold hover:brightness-110 disabled:opacity-50 transition-all shrink-0"
+                  >
+                    {verifyingOtp ? "Verifying..." : "Verify OTP"}
+                  </button>
+                </div>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <button
+                  type="button"
+                  onClick={handleSendOtp}
+                  disabled={sendingOtp}
+                  className="text-primary hover:underline font-semibold"
+                >
+                  Resend OTP
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOtpSent(false)}
+                  className="text-slate-500 hover:underline"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {otpError && (
+            <div className="md:col-span-2 flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 text-red-600 rounded-xl text-sm animate-in shake duration-300">
+              <AlertCircle className="w-4 h-4" />
+              <p className="font-medium">{otpError}</p>
+            </div>
+          )}
+
+          {otpSuccess && (
+            <div className="md:col-span-2 flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/30 text-green-600 rounded-xl text-sm animate-in fade-in duration-300">
+              <CheckCircle2 className="w-4 h-4" />
+              <p className="font-medium">{otpSuccess}</p>
+            </div>
+          )}
   
           <div className="space-y-2">
             <label className="text-sm font-medium">Email Address</label>
@@ -115,13 +330,25 @@ export default function CustomerDetailsStep({ onNext, onPrev, updateData, data, 
           </div>
       </div>
 
-      <div className="flex justify-between pt-6 border-t border-slate-100 dark:border-slate-800">
+      <div className="flex justify-between items-center pt-6 border-t border-slate-100 dark:border-slate-800">
         <button type="button" onClick={onPrev} className="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 font-semibold transition-all">
           Back
         </button>
-        <button type="submit" className="btn-primary">
-          Continue
-        </button>
+        <div className="flex flex-col items-end">
+          <button
+            type="submit"
+            disabled={!isVerified || loading}
+            className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+            Continue
+          </button>
+          {!isVerified && (
+            <span className="text-[10px] text-amber-500 font-medium mt-1">
+              Verify mobile number to continue
+            </span>
+          )}
+        </div>
       </div>
     </form>
   );
