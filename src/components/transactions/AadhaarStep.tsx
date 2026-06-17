@@ -71,12 +71,35 @@ export default function AadhaarStep({ onNext, updateData, data, jumpToStep }: an
     if (result.success) {
       const kyc = result.data;
       setVerified(true);
+
+      // Build address cleanly to prevent "undefined" strings
+      let resolvedAddress = "";
+      if (kyc.full_address) {
+        resolvedAddress = kyc.full_address;
+      } else if (kyc.address) {
+        const parts = [
+          kyc.address.house,
+          kyc.address.street,
+          kyc.address.landmark,
+          kyc.address.loc,
+          kyc.address.vtc,
+          kyc.address.post_office,
+          kyc.address.district,
+          kyc.address.state
+        ].filter(val => val && val !== "null" && val !== "undefined" && String(val).trim() !== "");
+        
+        resolvedAddress = parts.join(", ");
+        if (kyc.address.pincode) {
+          resolvedAddress += ` - ${kyc.address.pincode}`;
+        }
+      }
+
       updateData({
         aadhaarNumber: aadhaar,
-        fullName: kyc.name,
-        dob: kyc.date_of_birth,
-        gender: kyc.gender,
-        address: kyc.full_address || `${kyc.address?.house}, ${kyc.address?.street}, ${kyc.address?.vtc}, ${kyc.address?.district}, ${kyc.address?.state} - ${kyc.address?.pincode}`,
+        fullName: kyc.name || kyc.fullName || kyc.full_name || "N/A",
+        dob: kyc.date_of_birth || kyc.dob || "",
+        gender: kyc.gender || "N/A",
+        address: resolvedAddress || "N/A",
       });
     } else {
       setError(result.message || "Invalid OTP or verification failed.");
