@@ -73,6 +73,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none text-slate-900 dark:text-white"
                 placeholder="admin@goldpecash.com"
+                autoComplete="off"
               />
             </div>
 
@@ -88,6 +89,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-4 pr-12 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none text-slate-900 dark:text-white"
                   placeholder="••••••••"
+                  autoComplete="off"
                 />
                 <button
                   type="button"
@@ -119,7 +121,7 @@ export default function LoginPage() {
           </div>
         </div>
         
-        <p className="text-center text-slate-600 dark:text-slate-500 text-xs mt-8 font-medium">
+        <p className="text-center text-slate-600 dark:text-slate-500 text-xs mt-8 font-medium" suppressHydrationWarning>
           &copy; {new Date().getFullYear()} Gol Pe Cash. All rights reserved.
         </p>
       </div>

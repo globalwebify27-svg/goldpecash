@@ -84,3 +84,56 @@ export async function updateBranchAction(branchId: string, data: { name: string;
     return { success: false, message: "Failed to update branch settings" };
   }
 }
+
+export async function updateUserAction(userId: string, formData: FormData) {
+  try {
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const phone = formData.get("phone") as string;
+    const role = formData.get("role") as string;
+    const branchId = formData.get("branchId") as string;
+    const status = formData.get("status") as string || "ACTIVE";
+    const password = formData.get("password") as string;
+
+    // Basic validation
+    if (!name || !email || !role) {
+      return { success: false, message: "Name, email, and role are required" };
+    }
+
+    if (password && password.trim() !== "") {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await db.query(
+        "UPDATE User SET name = ?, email = ?, phone = ?, role = ?, branchId = ?, status = ?, password = ?, updatedAt = NOW(3) WHERE id = ?",
+        [name, email, phone, role, branchId || null, status, hashedPassword, userId]
+      );
+    } else {
+      await db.query(
+        "UPDATE User SET name = ?, email = ?, phone = ?, role = ?, branchId = ?, status = ?, updatedAt = NOW(3) WHERE id = ?",
+        [name, email, phone, role, branchId || null, status, userId]
+      );
+    }
+
+    revalidatePath("/users");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error updating user:", error);
+    if (error.code === 'ER_DUP_ENTRY') {
+      return { success: false, message: "Email already exists" };
+    }
+    return { success: false, message: "Something went wrong" };
+  }
+}
+
+export async function toggleUserStatusAction(userId: string, currentStatus: string) {
+  try {
+    const newStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+    await db.query("UPDATE User SET status = ?, updatedAt = NOW(3) WHERE id = ?", [newStatus, userId]);
+    revalidatePath("/users");
+    return { success: true };
+  } catch (error) {
+    console.error("Error toggling user status:", error);
+    return { success: false, message: "Failed to update user status" };
+  }
+}
+
+
