@@ -4,6 +4,7 @@ import { FileText, Printer, Download, CheckCircle2, Loader2 } from "lucide-react
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { completeTransaction } from "@/app/actions/transaction";
+import EKycAgreementText from "./EKycAgreementText";
 
 export default function AgreementStep({ onPrev, data, user }: any) {
   const [loading, setLoading] = useState(false);
@@ -260,26 +261,13 @@ Thank you for choosing Gol Pe Cash!`;
         </div>
 
         <div className="pt-2 text-[9px] text-slate-400 leading-tight" style={{ pageBreakInside: 'avoid' }}>
-          <div className="font-bold mb-0.5 uppercase text-slate-500 flex justify-between items-center">
-            <span>Terms & Conditions:</span>
-            <a 
-              href="/GOLD%20EKYC%20AGREEMENT%20T%26C.pdf" 
-              target="_blank" 
-              className="text-primary hover:underline font-bold no-print"
-            >
-              Open PDF in New Tab
-            </a>
-          </div>
-          <p>1. I hereby declare that the gold ornaments listed above are my personal property. 2. I confirm that I am selling this gold voluntarily. 3. The purity and weight have been verified in my presence. 4. GPC ORNAMANETS (OPC) PRIVATE LIMITED is not responsible for any legal disputes regarding the ownership of these ornaments. <span className="hidden print:inline font-bold text-slate-500">(Full Terms & Conditions available at /GOLD EKYC AGREEMENT T&C.pdf)</span></p>
+          <p className="font-bold mb-0.5 uppercase text-slate-500">Terms & Conditions Summary:</p>
+          <p>1. I hereby declare that the gold ornaments listed above are my personal property. 2. I confirm that I am selling this gold voluntarily. 3. The purity and weight have been verified in my presence. 4. GPC ORNAMANETS (OPC) PRIVATE LIMITED is not responsible for any legal disputes regarding the ownership of these ornaments.</p>
         </div>
 
-        {/* Embedded Full Terms & Conditions PDF */}
-        <div className="mt-4 border-t pt-4 no-print" style={{ pageBreakInside: 'avoid' }}>
-          <p className="text-[10px] font-bold uppercase text-slate-400 mb-2">Terms & Conditions Document</p>
-          <iframe 
-            src="/GOLD%20EKYC%20AGREEMENT%20T%26C.pdf#toolbar=0" 
-            className="w-full h-[600px] rounded-xl border border-slate-200 dark:border-slate-700 bg-white"
-          />
+        {/* Embedded Full Terms & Conditions (rendered inline, printed as a merged document) */}
+        <div style={{ breakBefore: "page" }} className="print:mt-0 mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <EKycAgreementText />
         </div>
       </div>
     </>
