@@ -51,6 +51,29 @@ export default function AadhaarStep({ onNext, updateData, data, jumpToStep }: an
     setLoading(true);
     setError("");
     
+    // Check if customer already exists in DB
+    const searchResult = await searchCustomer(aadhaar);
+    if (searchResult.success) {
+      const c = searchResult.data;
+      setVerified(true);
+      updateData({
+        customerId: c.id,
+        aadhaarNumber: c.aadhaarNumber,
+        fullName: c.fullName,
+        dob: c.dob ? new Date(c.dob).toISOString().split('T')[0] : "",
+        gender: c.gender,
+        mobile: c.mobile,
+        address: c.address,
+      });
+      setLoading(false);
+      return;
+    } else if (searchResult.isFraud) {
+      setError(searchResult.message || "This Aadhaar is blacklisted.");
+      setLoading(false);
+      return;
+    }
+
+    // Customer does not exist, send OTP
     const result = await requestOtpAction(aadhaar);
     if (result.success) {
       setReferenceId(result.referenceId!);

@@ -12,6 +12,12 @@ export default function AgreementStep({ onPrev, data, user }: any) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const subtotal = data.goldItems ? data.goldItems.reduce((acc: number, item: any) => {
+    const netWeight = (parseFloat(item.gross) || 0) - (parseFloat(item.stone) || 0);
+    return acc + (netWeight * (parseFloat(item.rate) || 0) * (parseFloat(item.purity) / 100));
+  }, 0) : 0;
+  const lessAmount = subtotal * ((data.lessPercent || 0) / 100);
+
   useEffect(() => {
     if (searchParams?.get("print") === "true") {
       const timer = setTimeout(() => {
@@ -77,7 +83,8 @@ export default function AgreementStep({ onPrev, data, user }: any) {
       <div id="printable-agreement" className={`max-w-2xl mx-auto glass p-6 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-4 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 ${completed ? 'hidden print:block' : ''}`}>
         <div className="text-center border-b pb-4 pt-4">
           <img src="/logo.webp" alt="Gold Pe Cash" className="h-14 mx-auto object-contain mb-1" />
-          <p className="text-[10px] font-bold tracking-widest uppercase text-slate-500">Premium Gold Buying Service</p>
+          <p className="text-[11px] font-bold uppercase text-slate-800 dark:text-slate-100">GPC ORNAMANETS (OPC) PRIVATE LIMITED</p>
+          <p className="text-[9px] font-bold tracking-widest uppercase text-slate-500">Premium Gold Buying Service</p>
           <p className="text-[10px] text-slate-400">Authorized Branch: {user?.branchName || "Main Branch"} | Agreement: Pending</p>
         </div>
 
@@ -126,30 +133,54 @@ export default function AgreementStep({ onPrev, data, user }: any) {
               <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
                 <th className="px-3 py-2 text-left">Description</th>
                 <th className="px-3 py-2 text-right">Gross Wt</th>
+                <th className="px-3 py-2 text-right">Stone Wt</th>
+                <th className="px-3 py-2 text-right">Purity</th>
                 <th className="px-3 py-2 text-right">Rate/g</th>
-                <th className="px-3 py-2 text-right">Value</th>
+                <th className="px-3 py-2 text-right">Value (₹)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {data.goldItems.map((item: any, i: number) => {
                 const netWeight = (parseFloat(item.gross) || 0) - (parseFloat(item.stone) || 0);
-                const value = netWeight * (parseFloat(item.rate) || 0) * (parseFloat(item.purity) / 100);
+                const baseValue = netWeight * (parseFloat(item.rate) || 0) * (parseFloat(item.purity) / 100);
                 return (
                   <tr key={i}>
                     <td className="px-3 py-2">
                       <p className="font-bold dark:text-white">{item.type}</p>
-                      <p className="text-[10px] text-slate-500">Purity: {item.purity}%</p>
                     </td>
                     <td className="px-3 py-2 text-right font-medium dark:text-slate-200">{item.gross}g</td>
+                    <td className="px-3 py-2 text-right font-medium dark:text-slate-200">{item.stone}g</td>
+                    <td className="px-3 py-2 text-right font-medium dark:text-slate-200">{item.purity}%</td>
                     <td className="px-3 py-2 text-right font-medium dark:text-slate-200">₹ {parseFloat(item.rate).toLocaleString("en-IN")}</td>
-                    <td className="px-3 py-2 text-right font-bold dark:text-white">₹ {value.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                    <td className="px-3 py-2 text-right font-bold dark:text-white">₹ {baseValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                   </tr>
                 );
               })}
             </tbody>
             <tfoot>
+              <tr className="border-t border-slate-250 dark:border-slate-850 font-semibold text-slate-600 dark:text-slate-400">
+                <td className="px-3 py-1.5 text-right" colSpan={5}>Subtotal</td>
+                <td className="px-3 py-1.5 text-right">₹ {subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+              </tr>
+              {data.lessPercent > 0 && (
+                <tr className="font-semibold text-red-500">
+                  <td className="px-3 py-1.5 text-right" colSpan={5}>Less ({data.lessPercent}%)</td>
+                  <td className="px-3 py-1.5 text-right">-₹ {lessAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                </tr>
+              )}
+              {data.addAmount > 0 && (
+                <tr className="font-semibold text-green-500">
+                  <td className="px-3 py-1.5 text-right" colSpan={5}>Add Amount</td>
+                  <td className="px-3 py-1.5 text-right">+₹ {parseFloat(data.addAmount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                </tr>
+              )}
               <tr className="bg-slate-900 text-white font-bold">
-                <td className="px-3 py-3 rounded-bl-lg" colSpan={3}>Net Total Payout</td>
+                <td className="px-3 py-3 rounded-bl-lg" colSpan={5}>
+                  Net Total Payout
+                  <span className="ml-2 text-[10px] font-normal text-slate-300 uppercase tracking-widest">
+                    (Via: {data.paymentMethod || "CASH"})
+                  </span>
+                </td>
                 <td className="px-3 py-3 text-right text-lg text-primary rounded-br-lg">₹ {data.totalPayout.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
               </tr>
             </tfoot>
@@ -157,16 +188,34 @@ export default function AgreementStep({ onPrev, data, user }: any) {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2" style={{ pageBreakInside: 'avoid' }}>
-           <div className="space-y-1">
-              <p className="text-[10px] font-bold uppercase text-slate-400">Gold Photo</p>
-              {data.goldPhoto && <img src={data.goldPhoto} className="w-full h-24 rounded-lg object-cover border border-slate-200" />}
+           <div className="space-y-1.5">
+              <p className="text-[10px] font-bold uppercase text-slate-400">Gold Photos</p>
+              <div className="grid grid-cols-3 gap-2">
+                {data.goldPhotos && data.goldPhotos.length > 0 ? (
+                  data.goldPhotos.map((photo: string, i: number) => (
+                    <img key={i} src={photo} className="w-full h-20 rounded-lg object-cover border border-slate-200" />
+                  ))
+                ) : data.goldPhoto ? (
+                  <img src={data.goldPhoto} className="w-full h-20 rounded-lg object-cover border border-slate-200" />
+                ) : (
+                  <p className="text-slate-400 italic text-[10px]">No gold photos uploaded</p>
+                )}
+              </div>
            </div>
-           {data.invoicePhoto && (
-             <div className="space-y-1 text-left sm:text-right">
-                <p className="text-[10px] font-bold uppercase text-slate-400">Invoice Photo</p>
-                <img src={data.invoicePhoto} className="w-full h-24 rounded-lg object-cover border border-slate-200" />
-             </div>
-           )}
+           <div className="space-y-1.5 text-left sm:text-right">
+              <p className="text-[10px] font-bold uppercase text-slate-400">Invoice/Aadhaar Photos</p>
+              <div className="grid grid-cols-3 gap-2 sm:justify-items-end">
+                {data.invoicePhotos && data.invoicePhotos.length > 0 ? (
+                  data.invoicePhotos.map((photo: string, i: number) => (
+                    <img key={i} src={photo} className="w-full h-20 rounded-lg object-cover border border-slate-200" />
+                  ))
+                ) : data.invoicePhoto ? (
+                  <img src={data.invoicePhoto} className="w-full h-20 rounded-lg object-cover border border-slate-200" />
+                ) : (
+                  <p className="text-slate-400 italic text-[10px] w-full text-left sm:text-right">No invoice/aadhaar uploaded</p>
+                )}
+              </div>
+           </div>
         </div>
 
         <div className="flex justify-end pt-4" style={{ pageBreakInside: 'avoid' }}>
@@ -179,12 +228,13 @@ export default function AgreementStep({ onPrev, data, user }: any) {
               )}
             </div>
             <p className="text-[10px] font-bold uppercase text-slate-400">Customer Signature</p>
+            <p className="text-[9px] text-green-600 font-bold uppercase tracking-wider mt-0.5">✓ Digitally Signed</p>
           </div>
         </div>
 
         <div className="pt-2 text-[9px] text-slate-400 leading-tight" style={{ pageBreakInside: 'avoid' }}>
           <p className="font-bold mb-0.5 uppercase text-slate-500">Terms & Conditions:</p>
-          <p>1. I hereby declare that the gold ornaments listed above are my personal property. 2. I confirm that I am selling this gold voluntarily. 3. The purity and weight have been verified in my presence. 4. Gold Pe Cash is not responsible for any legal disputes regarding the ownership of these ornaments.</p>
+          <p>1. I hereby declare that the gold ornaments listed above are my personal property. 2. I confirm that I am selling this gold voluntarily. 3. The purity and weight have been verified in my presence. 4. GPC ORNAMANETS (OPC) PRIVATE LIMITED is not responsible for any legal disputes regarding the ownership of these ornaments.</p>
         </div>
       </div>
     </>

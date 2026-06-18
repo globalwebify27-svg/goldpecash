@@ -14,7 +14,8 @@ import {
   saveTransactionDraft, 
   saveTransactionPhotos, 
   saveTransactionValuation,
-  getDraftTransaction
+  getDraftTransaction,
+  saveTransactionSignature
 } from "@/app/actions/transaction";
 
 const steps = [
@@ -48,8 +49,11 @@ export default function NewTransactionPage() {
     photo: null,
     goldPhoto: null,
     invoicePhoto: null,
+    goldPhotos: [] as string[],
+    invoicePhotos: [] as string[],
     goldItems: [],
     totalPayout: 0,
+    paymentMethod: "CASH",
     signature: null,
     customerId: null,
     transactionId: null,
@@ -137,16 +141,28 @@ export default function NewTransactionPage() {
           }));
         }
 
-        const res = await saveTransactionValuation(txnId, currentData.goldItems, currentData.totalPayout);
+        const res = await saveTransactionValuation(
+          txnId, 
+          currentData.goldItems, 
+          currentData.totalPayout, 
+          currentData.paymentMethod,
+          currentData.lessPercent,
+          currentData.addAmount
+        );
         if (!res.success) throw new Error(res.error);
         
-        const photoRes = await saveTransactionPhotos(txnId, currentData.customerId!, {
+         const photoRes = await saveTransactionPhotos(txnId, currentData.customerId!, {
           goldPhoto: currentData.goldPhoto || undefined,
-          invoicePhoto: currentData.invoicePhoto || undefined
+          invoicePhoto: currentData.invoicePhoto || undefined,
+          goldPhotos: currentData.goldPhotos || [],
+          invoicePhotos: currentData.invoicePhotos || []
         });
         if (!photoRes.success) throw new Error(photoRes.error);
       }
-      // Step 4 (Signature) is handled inside completeTransaction in AgreementStep or similar
+      else if (currentStep === 4) { // Signature Step
+        const res = await saveTransactionSignature(currentData.transactionId!, currentData.customerId!, currentData.signature!);
+        if (!res.success) throw new Error(res.error);
+      }
       
       setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
     } catch (error: any) {
@@ -221,7 +237,7 @@ export default function NewTransactionPage() {
           <GoldValuationStep onNext={handleNextStep} onPrev={prevStep} updateData={updateFormData} data={formData} loading={saving} />
         )}
         {currentStep === 4 && (
-          <SignatureStep onNext={() => setCurrentStep(5)} onPrev={prevStep} updateData={updateFormData} data={formData} />
+          <SignatureStep onNext={handleNextStep} onPrev={prevStep} updateData={updateFormData} data={formData} loading={saving} />
         )}
         {currentStep === 5 && (
           <AgreementStep onPrev={prevStep} data={formData} user={session?.user} />

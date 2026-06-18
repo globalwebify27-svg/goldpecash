@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { UserCircle, Mail, Phone, MapPin, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { UserCircle, Mail, Phone, MapPin, Loader2, CheckCircle2, AlertCircle, UserCheck, Users } from "lucide-react";
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useSession } from "next-auth/react";
@@ -183,6 +183,62 @@ export default function CustomerDetailsStep({ onNext, onPrev, updateData, data, 
             />
           </div>
   
+          {/* Reference Person Details */}
+          <div className="md:col-span-2 border-t border-slate-100 dark:border-slate-800 pt-6 mt-2 space-y-4">
+            <div className="flex items-center gap-2 text-slate-900 dark:text-white">
+              <Users className="w-5 h-5 text-primary" />
+              <h3 className="text-base font-bold">Reference Person Details</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Reference Name</label>
+                <div className="relative">
+                  <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    required
+                    value={data.refName || ""}
+                    onChange={(e) => updateData({ refName: e.target.value })}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary outline-none"
+                    placeholder="e.g. Rajesh Kumar"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Reference Mobile</label>
+                <div className="relative">
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="tel"
+                    required
+                    maxLength={10}
+                    value={data.refMobile || ""}
+                    onChange={(e) => updateData({ refMobile: e.target.value.replace(/\D/g, "") })}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary outline-none"
+                    placeholder="9999999999"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Relation with Customer</label>
+                <div className="relative">
+                  <UserCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    required
+                    value={data.refRelation || ""}
+                    onChange={(e) => updateData({ refRelation: e.target.value })}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary outline-none"
+                    placeholder="e.g. Brother, Friend, Neighbor"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="md:col-span-2 space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Aadhaar Address (Auto-fetched)</label>

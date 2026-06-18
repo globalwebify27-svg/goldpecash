@@ -58,6 +58,9 @@ export async function getDraftTransaction(aadhaar: string, isNewMode: boolean = 
       mobile: customer.mobile,
       address: customer.address,
       currentAddress: customer.currentAddress,
+      refName: customer.refName || "",
+      refMobile: customer.refMobile || "",
+      refRelation: customer.refRelation || "",
       transactionId: null,
       goldItems: [],
       photo: null,
@@ -68,12 +71,20 @@ export async function getDraftTransaction(aadhaar: string, isNewMode: boolean = 
 
     // Get documents (Customer Photo usually saved even without transaction)
     const [docs] = await db.query("SELECT documentType, fileUrl FROM CustomerDocument WHERE customerId = ?", [customer.id]);
+    draftData.goldPhotos = [];
+    draftData.invoicePhotos = [];
     for (const doc of (docs as any[])) {
       if (doc.documentType === "CUSTOMER_PHOTO") draftData.photo = doc.fileUrl;
       // If it's a new transaction, ignore previous gold/invoice photos
       if (!isNewMode) {
-        if (doc.documentType === "GOLD_IMAGE") draftData.goldPhoto = doc.fileUrl;
-        if (doc.documentType === "INVOICE") draftData.invoicePhoto = doc.fileUrl;
+        if (doc.documentType === "GOLD_IMAGE") {
+          draftData.goldPhoto = doc.fileUrl;
+          draftData.goldPhotos.push(doc.fileUrl);
+        }
+        if (doc.documentType === "INVOICE") {
+          draftData.invoicePhoto = doc.fileUrl;
+          draftData.invoicePhotos.push(doc.fileUrl);
+        }
         if (doc.documentType === "SIGNATURE") draftData.signature = doc.fileUrl;
       }
     }
@@ -84,6 +95,9 @@ export async function getDraftTransaction(aadhaar: string, isNewMode: boolean = 
       draftData.transactionNumber = txn.transactionNumber;
       draftData.totalPayout = txn.finalAmount;
       draftData.status = txn.status;
+      draftData.paymentMethod = txn.paymentMethod || "CASH";
+      draftData.lessPercent = txn.lessPercent || 0;
+      draftData.addAmount = txn.addAmount || 0;
       
       const [items] = await db.query("SELECT * FROM GoldItem WHERE transactionId = ?", [txn.id]);
       draftData.goldItems = (items as any[]).map((item: any) => ({
@@ -92,7 +106,9 @@ export async function getDraftTransaction(aadhaar: string, isNewMode: boolean = 
         gross: item.grossWeight.toString(),
         stone: item.stoneWeight.toString(),
         purity: item.purity.toString(),
-        rate: item.ratePerGram.toString()
+        rate: item.ratePerGram.toString(),
+        less: "0",
+        add: "0"
       }));
     }
 
@@ -105,7 +121,7 @@ export async function getDraftTransaction(aadhaar: string, isNewMode: boolean = 
 
 export async function saveCustomer(data: any) {
   try {
-    const { aadhaarNumber, fullName, dob, gender, mobile, address, currentAddress } = data;
+    const { aadhaarNumber, fullName, dob, gender, mobile, address, currentAddress, refName, refMobile, refRelation } = data;
     const branchId = data.branchId || "DEFAULT_BRANCH";
     const createdBy = data.createdBy || "SYSTEM";
 
@@ -120,15 +136,15 @@ export async function saveCustomer(data: any) {
       customerId = (existingCustomers as any[])[0].id;
       // Update existing customer info
       await db.query(
-        "UPDATE Customer SET fullName = ?, dob = ?, gender = ?, mobile = ?, address = ?, currentAddress = ?, updatedAt = NOW(3) WHERE id = ?",
-        [fullName, dob ? new Date(dob) : null, gender, mobile, address, currentAddress, customerId]
+        "UPDATE Customer SET fullName = ?, dob = ?, gender = ?, mobile = ?, address = ?, currentAddress = ?, refName = ?, refMobile = ?, refRelation = ?, updatedAt = NOW(3) WHERE id = ?",
+        [fullName, dob ? new Date(dob) : null, gender, mobile, address, currentAddress, refName || null, refMobile || null, refRelation || null, customerId]
       );
     } else {
       customerId = crypto.randomUUID();
       const customerCode = `CUST-${Math.floor(100000 + Math.random() * 900000)}`;
       await db.query(
-        "INSERT INTO Customer (id, customerCode, aadhaarNumber, aadhaarVerified, fullName, dob, gender, mobile, address, currentAddress, createdBy, branchId, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(3))",
-        [customerId, customerCode, aadhaarNumber, true, fullName, dob ? new Date(dob) : null, gender, mobile, address, currentAddress, createdBy, branchId]
+        "INSERT INTO Customer (id, customerCode, aadhaarNumber, aadhaarVerified, fullName, dob, gender, mobile, address, currentAddress, refName, refMobile, refRelation, createdBy, branchId, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(3))",
+        [customerId, customerCode, aadhaarNumber, true, fullName, dob ? new Date(dob) : null, gender, mobile, address, currentAddress, refName || null, refMobile || null, refRelation || null, createdBy, branchId]
       );
     }
 
@@ -170,18 +186,33 @@ export async function saveTransactionDraft(data: any) {
   }
 }
 
-export async function saveTransactionPhotos(transactionId: string, customerId: string, photos: { customerPhoto?: string, goldPhoto?: string, invoicePhoto?: string }) {
+export async function saveTransactionPhotos(transactionId: string, customerId: string, photos: { customerPhoto?: string, goldPhoto?: string, invoicePhoto?: string, goldPhotos?: string[], invoicePhotos?: string[] }) {
   try {
     if (photos.customerPhoto) {
       await db.query("DELETE FROM CustomerDocument WHERE customerId = ? AND documentType = ?", [customerId, "CUSTOMER_PHOTO"]);
       await db.query("INSERT INTO CustomerDocument (id, customerId, documentType, fileUrl) VALUES (?, ?, ?, ?)", [crypto.randomUUID(), customerId, "CUSTOMER_PHOTO", photos.customerPhoto]);
       await db.query("UPDATE Customer SET photoUrl = ? WHERE id = ?", [photos.customerPhoto, customerId]);
     }
-    if (photos.goldPhoto) {
-      await db.query("DELETE FROM CustomerDocument WHERE customerId = ? AND documentType = ?", [customerId, "GOLD_IMAGE"]); // Simple cleanup for drafts
+    if (photos.goldPhotos) {
+      await db.query("DELETE FROM CustomerDocument WHERE customerId = ? AND documentType = ?", [customerId, "GOLD_IMAGE"]);
+      for (const photo of photos.goldPhotos) {
+        if (photo) {
+          await db.query("INSERT INTO CustomerDocument (id, customerId, documentType, fileUrl) VALUES (?, ?, ?, ?)", [crypto.randomUUID(), customerId, "GOLD_IMAGE", photo]);
+        }
+      }
+    } else if (photos.goldPhoto) {
+      await db.query("DELETE FROM CustomerDocument WHERE customerId = ? AND documentType = ?", [customerId, "GOLD_IMAGE"]);
       await db.query("INSERT INTO CustomerDocument (id, customerId, documentType, fileUrl) VALUES (?, ?, ?, ?)", [crypto.randomUUID(), customerId, "GOLD_IMAGE", photos.goldPhoto]);
     }
-    if (photos.invoicePhoto) {
+    
+    if (photos.invoicePhotos) {
+      await db.query("DELETE FROM CustomerDocument WHERE customerId = ? AND documentType = ?", [customerId, "INVOICE"]);
+      for (const photo of photos.invoicePhotos) {
+        if (photo) {
+          await db.query("INSERT INTO CustomerDocument (id, customerId, documentType, fileUrl) VALUES (?, ?, ?, ?)", [crypto.randomUUID(), customerId, "INVOICE", photo]);
+        }
+      }
+    } else if (photos.invoicePhoto) {
       await db.query("DELETE FROM CustomerDocument WHERE customerId = ? AND documentType = ?", [customerId, "INVOICE"]);
       await db.query("INSERT INTO CustomerDocument (id, customerId, documentType, fileUrl) VALUES (?, ?, ?, ?)", [crypto.randomUUID(), customerId, "INVOICE", photos.invoicePhoto]);
     }
@@ -192,7 +223,7 @@ export async function saveTransactionPhotos(transactionId: string, customerId: s
   }
 }
 
-export async function saveTransactionValuation(transactionId: string, goldItems: any[], totalPayout: number) {
+export async function saveTransactionValuation(transactionId: string, goldItems: any[], totalPayout: number, paymentMethod: string = "CASH", lessPercent: number = 0, addAmount: number = 0) {
   try {
     // Calculate summaries
     const totalWeight = goldItems.reduce((sum: number, item: any) => sum + (parseFloat(item.gross) || 0), 0);
@@ -201,8 +232,8 @@ export async function saveTransactionValuation(transactionId: string, goldItems:
       : 0;
 
     await db.query(
-      "UPDATE `Transaction` SET totalWeight = ?, purity = ?, finalAmount = ?, updatedAt = NOW(3) WHERE id = ?",
-      [totalWeight, avgPurity, totalPayout, transactionId]
+      "UPDATE `Transaction` SET totalWeight = ?, purity = ?, finalAmount = ?, paymentMethod = ?, lessPercent = ?, addAmount = ?, updatedAt = NOW(3) WHERE id = ?",
+      [totalWeight, avgPurity, totalPayout, paymentMethod, lessPercent, addAmount, transactionId]
     );
 
     // Delete old items if any (re-saving draft)
@@ -211,9 +242,12 @@ export async function saveTransactionValuation(transactionId: string, goldItems:
     // Insert new items
     for (const item of goldItems) {
       const netWeight = (parseFloat(item.gross) || 0) - (parseFloat(item.stone) || 0);
+      const baseValue = netWeight * (parseFloat(item.rate) || 0) * ((parseFloat(item.purity) || 0) / 100);
+      const finalValue = baseValue;
+
       await db.query(
-        "INSERT INTO GoldItem (id, transactionId, goldType, ornamentName, grossWeight, stoneWeight, netWeight, purity, ratePerGram, finalValue) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [crypto.randomUUID(), transactionId, "GOLD", item.type, parseFloat(item.gross), parseFloat(item.stone), netWeight, parseFloat(item.purity), parseFloat(item.rate), (netWeight * parseFloat(item.rate) * (parseFloat(item.purity)/100))]
+        "INSERT INTO GoldItem (id, transactionId, goldType, ornamentName, grossWeight, stoneWeight, netWeight, purity, ratePerGram, lessPercent, addAmount, finalValue) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [crypto.randomUUID(), transactionId, "GOLD", item.type, parseFloat(item.gross), parseFloat(item.stone), netWeight, parseFloat(item.purity), parseFloat(item.rate), 0, 0, finalValue]
       );
     }
     return { success: true };
