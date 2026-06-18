@@ -77,3 +77,15 @@ export async function getBranchStatsAction(branchId: string) {
     return { success: false, message: "Failed to load branch statistics" };
   }
 }
+
+export async function deleteBranchAction(branchId: string) {
+  try {
+    await db.query("DELETE FROM Branch WHERE id = ?", [branchId]);
+    revalidatePath("/branches");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error deleting branch:", error);
+    return { success: false, message: "Failed to delete branch: " + error.message };
+  }
+}
+

@@ -11,7 +11,8 @@ import {
   BarChart3, 
   Settings,
   LogOut,
-  PlusCircle
+  PlusCircle,
+  MessageSquare
 } from "lucide-react";
 import Image from "next/image";
 import { signOut } from "next-auth/react";
@@ -21,6 +22,7 @@ const sidebarLinks = [
   { name: "Customers", href: "/customers", icon: Users },
   { name: "New Transaction", href: "/transactions/new", icon: PlusCircle },
   { name: "Transactions", href: "/transactions", icon: History },
+  { name: "Enquiries", href: "/enquiries", icon: MessageSquare },
   { name: "Branches", href: "/branches", icon: MapPin, role: "SUPER_ADMIN" },
   { name: "Users", href: "/users", icon: UserCircle, role: "SUPER_ADMIN" },
   { name: "Reports", href: "/reports", icon: BarChart3 },

@@ -1,18 +1,33 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Phone, User, Building2, Plus } from "lucide-react";
+import { MapPin, Phone, User, Building2, Plus, Trash2 } from "lucide-react";
 import BranchModal from "./BranchModal";
 import BranchStatsModal from "./BranchStatsModal";
+import { deleteBranchAction } from "@/app/actions/branch";
+import { useRouter } from "next/navigation";
 
 interface BranchesClientProps {
   branches: any[];
+  userRole?: string;
 }
 
-export default function BranchesClient({ branches }: BranchesClientProps) {
+export default function BranchesClient({ branches, userRole }: BranchesClientProps) {
+  const router = useRouter();
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingBranch, setEditingBranch] = useState<any | null>(null);
   const [statsBranch, setStatsBranch] = useState<any | null>(null);
+
+  const handleDeleteBranch = async (branchId: string, branchName: string) => {
+    if (window.confirm(`Are you sure you want to delete the branch "${branchName}"? This will delete all associated data.`)) {
+      const res = await deleteBranchAction(branchId);
+      if (res.success) {
+        router.refresh();
+      } else {
+        alert(res.message || "Failed to delete branch");
+      }
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -74,6 +89,15 @@ export default function BranchesClient({ branches }: BranchesClientProps) {
               >
                 Stats
               </button>
+              {userRole === "SUPER_ADMIN" && (
+                <button 
+                  onClick={() => handleDeleteBranch(branch.id, branch.name)}
+                  className="px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950/20 text-red-600 hover:bg-red-100 dark:hover:bg-red-950/30 transition-all"
+                  title="Delete Branch"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
         )) : (

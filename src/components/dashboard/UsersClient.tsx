@@ -9,18 +9,20 @@ import {
   MoreVertical,
   Pencil,
   Power,
-  PowerOff
+  PowerOff,
+  Trash2
 } from "lucide-react";
-import { toggleUserStatusAction } from "@/app/actions/user";
+import { toggleUserStatusAction, deleteUserAction } from "@/app/actions/user";
 import { useRouter } from "next/navigation";
 import UserModal from "./UserModal";
 
 interface UsersClientProps {
   users: any[];
   branches: any[];
+  userRole?: string;
 }
 
-export default function UsersClient({ users, branches }: UsersClientProps) {
+export default function UsersClient({ users, branches, userRole }: UsersClientProps) {
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<any | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -47,6 +49,18 @@ export default function UsersClient({ users, branches }: UsersClientProps) {
     }
   };
 
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    setActiveMenuId(null);
+    if (window.confirm(`Are you sure you want to delete user "${userName}"?`)) {
+      const res = await deleteUserAction(userId);
+      if (res.success) {
+        router.refresh();
+      } else {
+        alert(res.message || "Failed to delete user");
+      }
+    }
+  };
+
   return (
     <div className="premium-card !p-0 overflow-visible">
       <div className="overflow-x-auto overflow-y-visible">
@@ -61,56 +75,62 @@ export default function UsersClient({ users, branches }: UsersClientProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
-            {users.length > 0 ? users.map((user) => (
-              <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-all group">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                      <UserCircle className="w-6 h-6 text-slate-400" />
+            {users.length > 0 ? users.map((user, index) => {
+              const isNearBottom = index >= users.length - 2 && users.length > 2;
+              return (
+                <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-all group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                        <UserCircle className="w-6 h-6 text-slate-400" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 dark:text-white">{user.name}</p>
+                        <p className="text-xs text-slate-500 flex items-center gap-1">
+                          <Mail className="w-3 h-3" /> {user.email}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-bold text-slate-900 dark:text-white">{user.name}</p>
-                      <p className="text-xs text-slate-500 flex items-center gap-1">
-                        <Mail className="w-3 h-3" /> {user.email}
-                      </p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-primary" />
+                      <span className="font-semibold text-slate-700 dark:text-slate-300">
+                        {user.role.replace('_', ' ')}
+                      </span>
                     </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-primary" />
-                    <span className="font-semibold text-slate-700 dark:text-slate-300">
-                      {user.role.replace('_', ' ')}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2 text-slate-500">
+                      <Building2 className="w-4 h-4" />
+                      {user.branchName || 'N/A'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${
+                      user.status === 'ACTIVE' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                    }`}>
+                      {user.status}
                     </span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2 text-slate-500">
-                    <Building2 className="w-4 h-4" />
-                    {user.branchName || 'N/A'}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${
-                    user.status === 'ACTIVE' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-                  }`}>
-                    {user.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-right relative overflow-visible">
-                  <div className="inline-block text-left">
-                    <button 
-                      onClick={() => setActiveMenuId(activeMenuId === user.id ? null : user.id)}
-                      className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-slate-400 hover:text-slate-950 dark:hover:text-white"
-                    >
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
-
-                    {activeMenuId === user.id && (
-                      <div 
-                        ref={menuRef}
-                        className="absolute right-6 mt-1 w-48 rounded-2xl bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 shadow-xl z-50 py-2 animate-in fade-in slide-in-from-top-1 duration-150"
+                  </td>
+                  <td className="px-6 py-4 text-right relative overflow-visible">
+                    <div className="inline-block text-left">
+                      <button 
+                        onClick={() => setActiveMenuId(activeMenuId === user.id ? null : user.id)}
+                        className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-slate-400 hover:text-slate-950 dark:hover:text-white"
                       >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+  
+                      {activeMenuId === user.id && (
+                        <div 
+                          ref={menuRef}
+                          className={`absolute right-6 w-48 rounded-2xl bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 shadow-xl z-50 py-2 animate-in fade-in duration-150 ${
+                            isNearBottom 
+                              ? 'bottom-full mb-1 origin-bottom slide-in-from-bottom-1' 
+                              : 'top-full mt-1 origin-top slide-in-from-top-1'
+                          }`}
+                        >
                         <button
                           onClick={() => {
                             setEditingUser(user);
@@ -141,12 +161,22 @@ export default function UsersClient({ users, branches }: UsersClientProps) {
                             </>
                           )}
                         </button>
+                        {userRole === "SUPER_ADMIN" && (
+                          <button
+                            onClick={() => handleDeleteUser(user.id, user.name)}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors border-t border-slate-100 dark:border-slate-800/60"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Delete User
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
                 </td>
               </tr>
-            )) : (
+            );
+          }) : (
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center text-slate-500 italic">
                   No users found.

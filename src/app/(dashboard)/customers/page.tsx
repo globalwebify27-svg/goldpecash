@@ -23,11 +23,7 @@ export default async function CustomersPage() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Customers</h1>
           <p className="text-slate-500 dark:text-slate-400">Manage and view all onboarded customers across branches.</p>
         </div>
-        <div className="flex gap-3">
-          <button className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-semibold text-sm flex items-center gap-2 hover:bg-slate-50 transition-all">
-            <Download className="w-4 h-4" /> Export CSV
-          </button>
-        </div>
+
       </div>
 
       <CustomerTable customers={customers} />

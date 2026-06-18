@@ -1,11 +1,46 @@
-export default function PlaceholderPage() {
+import { auth } from "@/auth";
+import { 
+  getDashboardStats, 
+  getDailyRevenue, 
+  getWeeklyRevenue, 
+  getMonthlyRevenue, 
+  getAllTransactions, 
+  getBranches 
+} from "@/lib/data";
+import ReportsClient from "@/components/dashboard/ReportsClient";
+
+export default async function ReportsPage() {
+  const session = await auth();
+  const userRole = (session?.user as any)?.role;
+  const userBranchId = (session?.user as any)?.branchId;
+  const filterBranchId = userRole === "SUPER_ADMIN" ? undefined : userBranchId;
+
+  // Retrieve data in parallel
+  const [
+    stats,
+    dailyRevenue,
+    weeklyRevenue,
+    monthlyRevenue,
+    transactions,
+    branches
+  ] = await Promise.all([
+    getDashboardStats(filterBranchId),
+    getDailyRevenue(filterBranchId),
+    getWeeklyRevenue(filterBranchId),
+    getMonthlyRevenue(filterBranchId),
+    getAllTransactions(filterBranchId),
+    getBranches()
+  ]);
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-700">
-      <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-      </div>
-      <h1 className="text-xl font-bold">Module Under Development</h1>
-      <p className="text-slate-500">This feature is being finalized and will be available soon.</p>
-    </div>
+    <ReportsClient 
+      stats={stats}
+      dailyRevenue={dailyRevenue}
+      weeklyRevenue={weeklyRevenue}
+      monthlyRevenue={monthlyRevenue}
+      transactions={transactions}
+      branches={branches}
+      userRole={userRole}
+    />
   );
 }

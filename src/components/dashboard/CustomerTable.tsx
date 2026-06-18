@@ -8,7 +8,8 @@ import {
   History, 
   ShieldAlert,
   Search,
-  Filter
+  Filter,
+  Download
 } from "lucide-react";
 import Link from "next/link";
 import FraudModal from "./FraudModal";
@@ -22,6 +23,45 @@ export default function CustomerTable({ customers }: CustomerTableProps) {
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [showFraudModal, setShowFraudModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredCustomers = customers.filter((customer) => {
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return true;
+    return (
+      String(customer.fullName || "").toLowerCase().includes(query) ||
+      String(customer.customerCode || "").toLowerCase().includes(query) ||
+      String(customer.mobile || "").includes(query) ||
+      String(customer.aadhaarNumber || "").includes(query)
+    );
+  });
+
+  const handleExportCSV = () => {
+    const headers = ["Customer Code", "Full Name", "Mobile", "Email", "Aadhaar Number", "Is Fraud", "Fraud Reason", "Created At"];
+    const csvContent = [
+      headers.join(","),
+      ...filteredCustomers.map(c => [
+        `"${String(c.customerCode || '').replace(/"/g, '""')}"`,
+        `"${String(c.fullName || '').replace(/"/g, '""')}"`,
+        `"${String(c.mobile || '').replace(/"/g, '""')}"`,
+        `"${String(c.email || '').replace(/"/g, '""')}"`,
+        `"${String(c.aadhaarNumber || '').replace(/"/g, '""')}"`,
+        `"${c.isFraud ? 'Yes' : 'No'}"`,
+        `"${String(c.fraudReason || '').replace(/"/g, '""')}"`,
+        `"${new Date(c.createdAt).toLocaleDateString()}"`
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `customers_export_${new Date().toISOString().slice(0,10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <>
@@ -32,10 +72,19 @@ export default function CustomerTable({ customers }: CustomerTableProps) {
             <input 
               type="text" 
               placeholder="Search by name, Aadhaar, or mobile..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none transition-all"
             />
           </div>
           <div className="flex gap-2">
+            <button 
+              onClick={handleExportCSV}
+              className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-semibold text-sm flex items-center gap-2 hover:bg-slate-50 transition-all text-slate-700 dark:text-slate-300"
+              title="Export CSV"
+            >
+              <Download className="w-4 h-4" /> Export CSV
+            </button>
             <button className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 transition-all">
               <Filter className="w-5 h-5 text-slate-500" />
             </button>
@@ -54,7 +103,7 @@ export default function CustomerTable({ customers }: CustomerTableProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
-              {customers.length > 0 ? customers.map((customer) => (
+              {filteredCustomers.length > 0 ? filteredCustomers.map((customer) => (
                 <tr key={customer.id} className={`hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-all group ${customer.isFraud ? 'bg-red-50/30 dark:bg-red-900/5' : ''}`}>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -136,7 +185,7 @@ export default function CustomerTable({ customers }: CustomerTableProps) {
         </div>
 
         <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-sm">
-          <p className="text-slate-500">Showing {customers.length} entries</p>
+          <p className="text-slate-500">Showing {filteredCustomers.length} entries</p>
         </div>
       </div>
 

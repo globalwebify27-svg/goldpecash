@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Lock, Loader2, Save, ShieldCheck } from "lucide-react";
+import { Lock, Loader2, Save, ShieldCheck, Eye, EyeOff } from "lucide-react";
 import { updatePasswordAction } from "@/app/actions/user";
 
 export default function SecuritySettings({ user }: any) {
@@ -10,6 +10,9 @@ export default function SecuritySettings({ user }: any) {
     new: "",
     confirm: ""
   });
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
@@ -52,12 +55,19 @@ export default function SecuritySettings({ user }: any) {
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
-              type="password" 
+              type={showCurrent ? "text" : "password"} 
               required
               value={passwords.current}
               onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
-              className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary outline-none transition-all"
+              className="w-full pl-10 pr-12 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary outline-none transition-all"
             />
+            <button
+              type="button"
+              onClick={() => setShowCurrent(!showCurrent)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-650 transition-all"
+            >
+              {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
           </div>
         </div>
 
@@ -66,13 +76,20 @@ export default function SecuritySettings({ user }: any) {
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
-              type="password" 
+              type={showNew ? "text" : "password"} 
               required
               minLength={6}
               value={passwords.new}
               onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
-              className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary outline-none transition-all"
+              className="w-full pl-10 pr-12 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary outline-none transition-all"
             />
+            <button
+              type="button"
+              onClick={() => setShowNew(!showNew)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-650 transition-all"
+            >
+              {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
           </div>
         </div>
 
@@ -81,12 +98,19 @@ export default function SecuritySettings({ user }: any) {
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
-              type="password" 
+              type={showConfirm ? "text" : "password"} 
               required
               value={passwords.confirm}
               onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
-              className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary outline-none transition-all"
+              className="w-full pl-10 pr-12 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary outline-none transition-all"
             />
+            <button
+              type="button"
+              onClick={() => setShowConfirm(!showConfirm)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-650 transition-all"
+            >
+              {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
           </div>
         </div>
 

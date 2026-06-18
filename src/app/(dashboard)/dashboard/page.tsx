@@ -10,6 +10,7 @@ import {
 import { auth } from "@/auth";
 import { getDashboardStats, getRecentTransactions, getMonthlyRevenue, getDailyRevenue, getWeeklyRevenue } from "@/lib/data";
 import RevenueChart from "@/components/dashboard/RevenueChart";
+import AddEnquiryButton from "@/components/dashboard/AddEnquiryButton";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -56,9 +57,12 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Dashboard Overview</h1>
-        <p className="text-slate-500 dark:text-slate-400">Welcome back, here's what's happening today.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Dashboard Overview</h1>
+          <p className="text-slate-500 dark:text-slate-400">Welcome back, here's what's happening today.</p>
+        </div>
+        <AddEnquiryButton branchId={userBranchId} userId={session?.user?.id} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

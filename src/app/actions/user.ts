@@ -136,4 +136,15 @@ export async function toggleUserStatusAction(userId: string, currentStatus: stri
   }
 }
 
+export async function deleteUserAction(userId: string) {
+  try {
+    await db.query("DELETE FROM User WHERE id = ?", [userId]);
+    revalidatePath("/users");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error deleting user:", error);
+    return { success: false, message: "Failed to delete user: " + error.message };
+  }
+}
+
 

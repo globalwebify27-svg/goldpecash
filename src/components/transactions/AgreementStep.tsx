@@ -50,6 +50,33 @@ export default function AgreementStep({ onPrev, data, user }: any) {
     window.print();
   };
 
+  const handleWhatsAppShare = () => {
+    let phone = data.mobile || "";
+    phone = phone.replace(/\D/g, "");
+    if (phone.length === 10) {
+      phone = `91${phone}`;
+    }
+
+    const totalWeight = data.goldItems ? data.goldItems.reduce((acc: number, item: any) => acc + (parseFloat(item.gross) || 0), 0) : 0;
+    const message = `Dear ${data.fullName},
+
+Thank you for transacting with GPC Ornaments (OPC) Private Limited.
+
+*Transaction Number*: ${txnNumber}
+*Total Weight*: ${totalWeight}g
+*Payout Amount*: ₹${(data.totalPayout || 0).toLocaleString("en-IN")}
+*Status*: COMPLETED
+
+You can view and print your digitally signed purchase agreement here:
+${window.location.origin}/transactions/new?aadhaar=${data.aadhaarNumber}&txnId=${data.transactionId}
+
+Thank you for choosing Gol Pe Cash!`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
   const printableAgreement = (
     <>
       <style jsx global>{`
@@ -151,8 +178,8 @@ export default function AgreementStep({ onPrev, data, user }: any) {
                     <td className="px-3 py-2 text-right font-medium dark:text-slate-200">{item.gross}g</td>
                     <td className="px-3 py-2 text-right font-medium dark:text-slate-200">{item.stone}g</td>
                     <td className="px-3 py-2 text-right font-medium dark:text-slate-200">{item.purity}%</td>
-                    <td className="px-3 py-2 text-right font-medium dark:text-slate-200">₹ {parseFloat(item.rate).toLocaleString("en-IN")}</td>
-                    <td className="px-3 py-2 text-right font-bold dark:text-white">₹ {baseValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                    <td className="px-3 py-2 text-right font-medium dark:text-slate-200">₹ {(parseFloat(item.rate) || 0).toLocaleString("en-IN")}</td>
+                    <td className="px-3 py-2 text-right font-bold dark:text-white">₹ {(baseValue || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                   </tr>
                 );
               })}
@@ -160,18 +187,18 @@ export default function AgreementStep({ onPrev, data, user }: any) {
             <tfoot>
               <tr className="border-t border-slate-250 dark:border-slate-850 font-semibold text-slate-600 dark:text-slate-400">
                 <td className="px-3 py-1.5 text-right" colSpan={5}>Subtotal</td>
-                <td className="px-3 py-1.5 text-right">₹ {subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                <td className="px-3 py-1.5 text-right">₹ {(subtotal || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
               </tr>
               {data.lessPercent > 0 && (
                 <tr className="font-semibold text-red-500">
                   <td className="px-3 py-1.5 text-right" colSpan={5}>Less ({data.lessPercent}%)</td>
-                  <td className="px-3 py-1.5 text-right">-₹ {lessAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                  <td className="px-3 py-1.5 text-right">-₹ {(lessAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                 </tr>
               )}
               {data.addAmount > 0 && (
                 <tr className="font-semibold text-green-500">
                   <td className="px-3 py-1.5 text-right" colSpan={5}>Add Amount</td>
-                  <td className="px-3 py-1.5 text-right">+₹ {parseFloat(data.addAmount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                  <td className="px-3 py-1.5 text-right">+₹ {(parseFloat(data.addAmount) || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                 </tr>
               )}
               <tr className="bg-slate-900 text-white font-bold">
@@ -181,7 +208,7 @@ export default function AgreementStep({ onPrev, data, user }: any) {
                     (Via: {data.paymentMethod || "CASH"})
                   </span>
                 </td>
-                <td className="px-3 py-3 text-right text-lg text-primary rounded-br-lg">₹ {data.totalPayout.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                <td className="px-3 py-3 text-right text-lg text-primary rounded-br-lg">₹ {(data.totalPayout || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
               </tr>
             </tfoot>
           </table>
@@ -257,6 +284,15 @@ export default function AgreementStep({ onPrev, data, user }: any) {
               className="px-8 py-3 rounded-xl border border-slate-200 dark:border-slate-800 font-bold hover:bg-slate-50 flex items-center justify-center gap-2"
             >
               <Printer className="w-5 h-5" /> Print Agreement
+            </button>
+            <button 
+              onClick={handleWhatsAppShare}
+              className="px-8 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold flex items-center justify-center gap-2 premium-shadow transition-all"
+            >
+              <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                <path d="M17.472 14.382c-.022-.08-.085-.184-.245-.26-.159-.077-.945-.467-1.092-.518-.147-.052-.254-.077-.36.078-.106.156-.412.518-.506.623-.093.106-.188.118-.346.04-.159-.077-.67-.247-1.275-.788-.47-.42-1.127-1.008-1.22-1.164-.093-.157-.01-.242.07-.32.072-.07.16-.188.24-.28.08-.093.106-.157.159-.26.053-.105.026-.196-.013-.273-.04-.077-.36-.867-.494-1.19-.13-.31-.264-.268-.36-.273-.093-.005-.201-.005-.308-.005-.107 0-.28.04-.427.197-.147.157-.56.548-.56 1.336 0 .788.574 1.548.654 1.654.08.106 1.13 1.719 2.736 2.41.382.166.68.265.912.339.385.122.735.105 1.013.064.31-.046.945-.386 1.078-.76.132-.372.132-.69.093-.76-.04-.07-.15-.11-.31-.19zm-5.44 8.62h-.001c-1.89 0-3.74-.51-5.35-1.47l-.38-.22-3.99 1.05 1.07-3.89-.25-.4c-1.05-1.67-1.61-3.61-1.61-5.6 0-5.83 4.74-10.57 10.57-10.57 2.83 0 5.48 1.1 7.48 3.1 2 2 3.1 4.66 3.1 7.48 0 5.83-4.74 10.58-10.57 10.58zm8.79-18.06c-2.35-2.35-5.47-3.64-8.79-3.64-6.83 0-12.4 5.57-12.4 12.4 0 2.21.57 4.37 1.68 6.26l-1.78 6.52 6.67-1.75c1.8 1 3.85 1.53 5.92 1.53h.005c6.83 0 12.4-5.57 12.4-12.4 0-3.31-1.29-6.43-3.5-8.62z"/>
+              </svg>
+              Share on WhatsApp
             </button>
             <button 
               onClick={() => router.push("/dashboard")}

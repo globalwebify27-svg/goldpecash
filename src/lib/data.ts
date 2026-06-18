@@ -60,14 +60,15 @@ export async function getDashboardStats(branchId?: string) {
 
 export async function getRecentTransactions(branchId?: string) {
   try {
-    const whereClause = branchId ? "WHERE t.branchId = ?" : "";
+    const whereClause = branchId ? "WHERE c.branchId = ?" : "";
     const params = branchId ? [branchId] : [];
     const [rows] = await db.query(`
       SELECT 
         t.*, 
         c.fullName as customerName, 
         c.customerCode,
-        c.aadhaarNumber
+        c.aadhaarNumber,
+        c.mobile
       FROM Transaction t
       JOIN Customer c ON t.customerId = c.id
       ${whereClause}
@@ -84,14 +85,11 @@ export async function getRecentTransactions(branchId?: string) {
 export async function getCustomers(branchId?: string) {
   try {
     if (branchId) {
-      // Show customers onboarded at this branch OR customers who have transactions at this branch
       const [rows] = await db.query(`
-        SELECT DISTINCT c.* 
-        FROM Customer c
-        LEFT JOIN \`Transaction\` t ON c.id = t.customerId
-        WHERE c.branchId = ? OR t.branchId = ?
-        ORDER BY c.createdAt DESC
-      `, [branchId, branchId]);
+        SELECT * FROM Customer 
+        WHERE branchId = ?
+        ORDER BY createdAt DESC
+      `, [branchId]);
       return rows as any[];
     }
     
@@ -155,14 +153,15 @@ export async function getUsers(branchId?: string) {
 
 export async function getAllTransactions(branchId?: string) {
   try {
-    const whereClause = branchId ? "WHERE t.branchId = ?" : "";
+    const whereClause = branchId ? "WHERE c.branchId = ?" : "";
     const params = branchId ? [branchId] : [];
     const [rows] = await db.query(`
       SELECT 
         t.*, 
         c.fullName as customerName, 
         c.customerCode,
-        c.aadhaarNumber
+        c.aadhaarNumber,
+        c.mobile
       FROM Transaction t
       JOIN Customer c ON t.customerId = c.id
       ${whereClause}
@@ -236,6 +235,18 @@ export async function getMonthlyRevenue(branchId?: string) {
     return rows as any[];
   } catch (error) {
     console.error("Error fetching monthly revenue:", error);
+    return [];
+  }
+}
+
+export async function getEnquiries(branchId?: string) {
+  try {
+    const whereClause = branchId ? "WHERE branchId = ?" : "";
+    const params = branchId ? [branchId] : [];
+    const [rows] = await db.query(`SELECT * FROM Enquiry ${whereClause} ORDER BY createdAt DESC`, params);
+    return rows as any[];
+  } catch (error) {
+    console.error("Error fetching enquiries:", error);
     return [];
   }
 }

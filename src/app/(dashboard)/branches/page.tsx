@@ -12,7 +12,7 @@ export default async function BranchesPage() {
 
   return (
     <div className="animate-in fade-in duration-700">
-      <BranchesClient branches={branches} />
+      <BranchesClient branches={branches} userRole={userRole} />
     </div>
   );
 }

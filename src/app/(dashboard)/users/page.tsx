@@ -22,7 +22,7 @@ export default async function UsersPage() {
         <AddUserButton branches={branches} />
       </div>
 
-      <UsersClient users={users} branches={branches} />
+      <UsersClient users={users} branches={branches} userRole={userRole} />
     </div>
   );
 }
