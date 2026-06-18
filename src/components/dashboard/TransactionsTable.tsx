@@ -82,7 +82,7 @@ Thank you for transacting with GPC Ornaments (OPC) Private Limited.
 *Status*: ${tx.status}
 
 You can view and print your digitally signed purchase agreement here:
-${window.location.origin}/transactions/new?aadhaar=${tx.aadhaarNumber}&txnId=${tx.id}
+${window.location.origin}/public/agreement?txnId=${tx.id}
 
 Thank you for choosing Gol Pe Cash!`;
 

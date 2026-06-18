@@ -292,3 +292,80 @@ export async function markAsFraud(customerId: string, reason: string) {
     return { success: false, error: (error as any).message };
   }
 }
+
+export async function getPublicTransaction(txnId: string) {
+  try {
+    const [txns] = await db.query(
+      "SELECT t.*, b.name as branchName FROM `Transaction` t LEFT JOIN Branch b ON t.branchId = b.id WHERE t.id = ?",
+      [txnId]
+    );
+    if ((txns as any[]).length === 0) return { success: false, message: "Transaction not found" };
+    const txn = (txns as any[])[0];
+
+    const [customers] = await db.query("SELECT * FROM Customer WHERE id = ?", [txn.customerId]);
+    if ((customers as any[]).length === 0) return { success: false, message: "Customer not found" };
+    const customer = (customers as any[])[0];
+
+    let draftData: any = {
+      customerId: customer.id,
+      aadhaarNumber: customer.aadhaarNumber,
+      fullName: customer.fullName,
+      dob: customer.dob ? new Date(customer.dob).toISOString().split('T')[0] : "",
+      gender: customer.gender,
+      mobile: customer.mobile,
+      address: customer.address,
+      currentAddress: customer.currentAddress,
+      refName: customer.refName || "",
+      refMobile: customer.refMobile || "",
+      refRelation: customer.refRelation || "",
+      transactionId: txn.id,
+      transactionNumber: txn.transactionNumber,
+      totalPayout: txn.finalAmount,
+      status: txn.status,
+      paymentMethod: txn.paymentMethod || "CASH",
+      lessPercent: txn.lessPercent || 0,
+      addAmount: txn.addAmount || 0,
+      branchName: txn.branchName || "Main Branch",
+      goldItems: [],
+      photo: null,
+      goldPhoto: null,
+      invoicePhoto: null,
+      signature: null,
+      goldPhotos: [],
+      invoicePhotos: [],
+    };
+
+    // Get documents
+    const [docs] = await db.query("SELECT documentType, fileUrl FROM CustomerDocument WHERE customerId = ?", [customer.id]);
+    for (const doc of (docs as any[])) {
+      if (doc.documentType === "CUSTOMER_PHOTO") draftData.photo = doc.fileUrl;
+      if (doc.documentType === "GOLD_IMAGE") {
+        draftData.goldPhoto = doc.fileUrl;
+        draftData.goldPhotos.push(doc.fileUrl);
+      }
+      if (doc.documentType === "INVOICE") {
+        draftData.invoicePhoto = doc.fileUrl;
+        draftData.invoicePhotos.push(doc.fileUrl);
+      }
+      if (doc.documentType === "SIGNATURE") draftData.signature = doc.fileUrl;
+    }
+
+    const [items] = await db.query("SELECT * FROM GoldItem WHERE transactionId = ?", [txn.id]);
+    draftData.goldItems = (items as any[]).map((item: any) => ({
+      id: item.id,
+      type: item.ornamentName,
+      gross: item.grossWeight.toString(),
+      stone: item.stoneWeight.toString(),
+      purity: item.purity.toString(),
+      rate: item.ratePerGram.toString(),
+      less: "0",
+      add: "0"
+    }));
+
+    return { success: true, data: draftData };
+  } catch (error) {
+    console.error("Error fetching public transaction:", error);
+    return { success: false, error: (error as any).message };
+  }
+}
+
