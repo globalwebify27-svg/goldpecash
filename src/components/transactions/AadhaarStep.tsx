@@ -47,7 +47,7 @@ export default function AadhaarStep({ onNext, updateData, data, jumpToStep }: an
   };
 
   const handleSendOtp = async () => {
-    if (aadhaar.length !== 12) return;
+    if (aadhaar.length !== 12 || loading) return;
     setLoading(true);
     setError("");
     
@@ -86,7 +86,7 @@ export default function AadhaarStep({ onNext, updateData, data, jumpToStep }: an
   };
 
   const handleVerifyOtp = async () => {
-    if (otp.length !== 6) return;
+    if (otp.length !== 6 || loading) return;
     setLoading(true);
     setError("");
 

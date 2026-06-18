@@ -283,8 +283,17 @@ export default function PublicAgreementPage(props: PublicAgreementPageProps) {
         </div>
 
         <div className="pt-2 text-[9px] text-slate-400 leading-tight" style={{ pageBreakInside: 'avoid' }}>
-          <p className="font-bold mb-0.5 uppercase text-slate-500">Terms & Conditions:</p>
-          <p>1. I hereby declare that the gold ornaments listed above are my personal property. 2. I confirm that I am selling this gold voluntarily. 3. The purity and weight have been verified in my presence. 4. GPC ORNAMENTS (OPC) PRIVATE LIMITED is not responsible for any legal disputes regarding the ownership of these ornaments.</p>
+          <div className="font-bold mb-0.5 uppercase text-slate-500 flex justify-between items-center">
+            <span>Terms & Conditions:</span>
+            <a 
+              href="/GOLD%20EKYC%20AGREEMENT%20T%26C.pdf" 
+              target="_blank" 
+              className="text-primary hover:underline font-bold no-print"
+            >
+              View Full T&C (PDF)
+            </a>
+          </div>
+          <p>1. I hereby declare that the gold ornaments listed above are my personal property. 2. I confirm that I am selling this gold voluntarily. 3. The purity and weight have been verified in my presence. 4. GPC ORNAMENTS (OPC) PRIVATE LIMITED is not responsible for any legal disputes regarding the ownership of these ornaments. <span className="hidden print:inline font-bold text-slate-500">(Full Terms & Conditions available at /GOLD EKYC AGREEMENT T&C.pdf)</span></p>
         </div>
       </div>
     </div>
