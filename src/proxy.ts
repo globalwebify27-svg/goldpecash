@@ -11,6 +11,12 @@ export default auth((req) => {
     return undefined;
   }
 
+  const isPublicPage = req.nextUrl.pathname.startsWith("/public");
+
+  if (isPublicPage) {
+    return undefined;
+  }
+
   if (!isLoggedIn) {
     return Response.redirect(new URL("/login", req.nextUrl));
   }
