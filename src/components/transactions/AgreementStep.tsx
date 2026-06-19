@@ -71,7 +71,7 @@ Thank you for transacting with GPC Ornaments (OPC) Private Limited.
 You can view and print your digitally signed purchase agreement here:
 ${window.location.origin}/public/agreement?txnId=${data.transactionId}
 
-Thank you for choosing Gol Pe Cash!`;
+Thank you for choosing Gold Pe Cash!`;
 
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://api.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`;
