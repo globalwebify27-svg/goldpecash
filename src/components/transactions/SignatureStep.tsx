@@ -66,14 +66,20 @@ function CropModal({ imageSrc, onCrop, onClose }: CropModalProps) {
   }, []);
 
   const startDrag = (e: React.MouseEvent | React.TouchEvent, actionType: 'move' | 'nw' | 'ne' | 'sw' | 'se') => {
-    e.preventDefault();
-    const startX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const startY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    if (e.cancelable) {
+      e.preventDefault();
+    }
+    const startX = 'touches' in e && e.touches.length > 0 ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const startY = 'touches' in e && e.touches.length > 0 ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
     const startCrop = { ...crop };
 
     const onMouseMove = (moveEvent: MouseEvent | TouchEvent) => {
-      const currentX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
-      const currentY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
+      if (moveEvent.cancelable) {
+        moveEvent.preventDefault();
+      }
+      const hasTouches = 'touches' in moveEvent && moveEvent.touches.length > 0;
+      const currentX = hasTouches ? moveEvent.touches[0].clientX : (moveEvent as MouseEvent).clientX;
+      const currentY = hasTouches ? moveEvent.touches[0].clientY : (moveEvent as MouseEvent).clientY;
 
       const deltaX = ((currentX - startX) / dimensions.width) * 100;
       const deltaY = ((currentY - startY) / dimensions.height) * 100;
@@ -187,10 +193,10 @@ function CropModal({ imageSrc, onCrop, onClose }: CropModalProps) {
                 onTouchStart={(e) => startDrag(e, 'move')}
               >
                 {/* Resize handles */}
-                <div className="absolute -top-2 -left-2 w-4 h-4 bg-orange-500 border-2 border-white dark:border-slate-900 rounded-full cursor-nwse-resize shadow-md" onMouseDown={(e) => { e.stopPropagation(); startDrag(e, 'nw'); }} onTouchStart={(e) => { e.stopPropagation(); startDrag(e, 'nw'); }} />
-                <div className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 border-2 border-white dark:border-slate-900 rounded-full cursor-nesw-resize shadow-md" onMouseDown={(e) => { e.stopPropagation(); startDrag(e, 'ne'); }} onTouchStart={(e) => { e.stopPropagation(); startDrag(e, 'ne'); }} />
-                <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-orange-500 border-2 border-white dark:border-slate-900 rounded-full cursor-nesw-resize shadow-md" onMouseDown={(e) => { e.stopPropagation(); startDrag(e, 'sw'); }} onTouchStart={(e) => { e.stopPropagation(); startDrag(e, 'sw'); }} />
-                <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-orange-500 border-2 border-white dark:border-slate-900 rounded-full cursor-nwse-resize shadow-md" onMouseDown={(e) => { e.stopPropagation(); startDrag(e, 'se'); }} onTouchStart={(e) => { e.stopPropagation(); startDrag(e, 'se'); }} />
+                <div className="absolute -top-2.5 -left-2.5 w-5 h-5 bg-orange-500 border-2 border-white dark:border-slate-900 rounded-full cursor-nwse-resize shadow-md after:absolute after:-inset-3 after:content-['']" onMouseDown={(e) => { e.stopPropagation(); startDrag(e, 'nw'); }} onTouchStart={(e) => { e.stopPropagation(); startDrag(e, 'nw'); }} />
+                <div className="absolute -top-2.5 -right-2.5 w-5 h-5 bg-orange-500 border-2 border-white dark:border-slate-900 rounded-full cursor-nesw-resize shadow-md after:absolute after:-inset-3 after:content-['']" onMouseDown={(e) => { e.stopPropagation(); startDrag(e, 'ne'); }} onTouchStart={(e) => { e.stopPropagation(); startDrag(e, 'ne'); }} />
+                <div className="absolute -bottom-2.5 -left-2.5 w-5 h-5 bg-orange-500 border-2 border-white dark:border-slate-900 rounded-full cursor-nesw-resize shadow-md after:absolute after:-inset-3 after:content-['']" onMouseDown={(e) => { e.stopPropagation(); startDrag(e, 'sw'); }} onTouchStart={(e) => { e.stopPropagation(); startDrag(e, 'sw'); }} />
+                <div className="absolute -bottom-2.5 -right-2.5 w-5 h-5 bg-orange-500 border-2 border-white dark:border-slate-900 rounded-full cursor-nwse-resize shadow-md after:absolute after:-inset-3 after:content-['']" onMouseDown={(e) => { e.stopPropagation(); startDrag(e, 'se'); }} onTouchStart={(e) => { e.stopPropagation(); startDrag(e, 'se'); }} />
               </div>
             )}
           </div>

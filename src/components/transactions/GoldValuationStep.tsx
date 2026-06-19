@@ -264,7 +264,7 @@ export default function GoldValuationStep({ onNext, onPrev, updateData, data, lo
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase text-slate-500">Gross (g)</label>
+                <label className="text-[10px] font-bold uppercase text-slate-500">Weight (g)</label>
                 <input
                   type="number"
                   value={item.gross}
