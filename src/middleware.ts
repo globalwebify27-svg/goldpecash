@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
 
@@ -9,7 +10,7 @@ export default auth((req) => {
 
   if (isAuthPage) {
     if (isLoggedIn) {
-      return Response.redirect(new URL("/dashboard", req.nextUrl));
+      return NextResponse.redirect(new URL("/dashboard", req.url));
     }
     return undefined;
   }
@@ -21,7 +22,7 @@ export default auth((req) => {
   }
 
   if (!isLoggedIn) {
-    return Response.redirect(new URL("/login", req.nextUrl));
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 });
 
