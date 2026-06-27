@@ -17,11 +17,17 @@ import Link from "next/link";
 
 interface TransactionsTableProps {
   transactions: any[];
+  branches: any[];
+  userRole: string;
+  userBranchId?: string;
 }
 
-export default function TransactionsTable({ transactions }: TransactionsTableProps) {
+export default function TransactionsTable({ transactions, branches, userRole, userBranchId }: TransactionsTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [selectedBranchId, setSelectedBranchId] = useState("ALL");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
   // Filter logic
@@ -36,16 +42,36 @@ export default function TransactionsTable({ transactions }: TransactionsTablePro
     // 2. Status Filter
     const matchesStatus = statusFilter === "ALL" || tx.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    // 3. Branch Filter
+    const matchesBranch = selectedBranchId === "ALL" || tx.branchId === selectedBranchId;
+
+    // 4. Date Filter
+    let matchesDate = true;
+    if (tx.createdAt) {
+      const createdAtDate = new Date(tx.createdAt);
+      if (startDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        if (createdAtDate < start) matchesDate = false;
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        if (createdAtDate > end) matchesDate = false;
+      }
+    }
+
+    return matchesSearch && matchesStatus && matchesBranch && matchesDate;
   });
 
   const handleExportCSV = () => {
-    const headers = ["Transaction Number", "Customer Name", "Aadhaar Number", "Weight (g)", "Amount (INR)", "Status", "Date"];
+    const headers = ["Transaction Number", "Customer Name", "Branch", "Aadhaar Number", "Weight (g)", "Amount (INR)", "Status", "Date"];
     const csvContent = [
       headers.join(","),
       ...filteredTransactions.map(tx => [
         `"${String(tx.transactionNumber || '').replace(/"/g, '""')}"`,
         `"${String(tx.customerName || '').replace(/"/g, '""')}"`,
+        `"${String(branches.find(b => b.id === tx.branchId)?.name || 'Unknown').replace(/"/g, '""')}"`,
         `"${String(tx.aadhaarNumber || '').replace(/"/g, '""')}"`,
         `"${tx.totalWeight}"`,
         `"${tx.finalAmount}"`,
@@ -114,42 +140,94 @@ Thank you for choosing Gold Pe Cash!`;
             <Download className="w-4 h-4" /> Export CSV
           </button>
           
-          <div className="relative">
-            <button 
-              onClick={() => setShowFilters(!showFilters)}
-              className={`px-4 py-2 rounded-xl border font-semibold text-sm flex items-center gap-2 transition-all ${
-                statusFilter !== "ALL" 
-                  ? "border-primary bg-primary/5 text-primary" 
-                  : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50"
-              }`}
-            >
-              <Filter className="w-4 h-4" /> 
-              {statusFilter === "ALL" ? "Filter" : statusFilter}
-            </button>
-
-            {showFilters && (
-              <div className="absolute right-0 mt-2 w-40 rounded-xl bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 shadow-xl z-50 py-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                {["ALL", "COMPLETED", "PENDING", "CANCELLED"].map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => {
-                      setStatusFilter(status);
-                      setShowFilters(false);
-                    }}
-                    className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${
-                      statusFilter === status 
-                        ? "text-primary bg-primary/5 dark:bg-primary/10" 
-                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                    }`}
-                  >
-                    {status}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className={`px-4 py-2 rounded-xl border font-semibold text-sm flex items-center gap-2 transition-all ${
+              showFilters || statusFilter !== "ALL" || selectedBranchId !== "ALL" || startDate || endDate
+                ? "border-primary bg-primary/5 text-primary" 
+                : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50"
+            }`}
+          >
+            <Filter className="w-4 h-4" /> Filter
+          </button>
         </div>
       </div>
+
+      {showFilters && (
+        <div className="px-6 pb-6 border-b border-slate-100 dark:border-slate-800 pt-4 bg-slate-50/50 dark:bg-slate-900/10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Status</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none transition-all text-slate-700 dark:text-slate-300"
+            >
+              <option value="ALL">All Statuses</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="PENDING">Pending</option>
+              <option value="CANCELLED">Cancelled</option>
+            </select>
+          </div>
+          {userRole === "SUPER_ADMIN" ? (
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Branch</label>
+              <select
+                value={selectedBranchId}
+                onChange={(e) => setSelectedBranchId(e.target.value)}
+                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none transition-all text-slate-700 dark:text-slate-300"
+              >
+                <option value="ALL">All Branches</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Branch</label>
+              <input
+                type="text"
+                disabled
+                value={branches.find(b => b.id === userBranchId)?.name || "My Branch"}
+                className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl text-sm outline-none transition-all text-slate-500 cursor-not-allowed"
+              />
+            </div>
+          )}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Start Date</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none transition-all text-slate-700 dark:text-slate-300"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">End Date</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none transition-all text-slate-700 dark:text-slate-300"
+            />
+          </div>
+          {(statusFilter !== "ALL" || selectedBranchId !== "ALL" || startDate !== "" || endDate !== "") && (
+            <div className="md:col-span-4 flex justify-end">
+              <button
+                onClick={() => {
+                  setStatusFilter("ALL");
+                  setSelectedBranchId("ALL");
+                  setStartDate("");
+                  setEndDate("");
+                }}
+                className="text-xs font-semibold text-primary hover:underline"
+              >
+                Clear Filters
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Mobile Card View */}
       <div className="md:hidden space-y-4 p-4 bg-slate-50/50 dark:bg-slate-900/10">

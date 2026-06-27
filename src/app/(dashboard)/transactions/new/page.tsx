@@ -22,7 +22,7 @@ const steps = [
   "Aadhaar Verification",
   "Customer Details",
   "Live Photo",
-  "Gold Valuation",
+  "Ornament Valuation",
   "Signature",
   "Agreement"
 ];

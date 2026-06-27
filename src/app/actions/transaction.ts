@@ -102,6 +102,7 @@ export async function getDraftTransaction(aadhaar: string, isNewMode: boolean = 
       const [items] = await db.query("SELECT * FROM GoldItem WHERE transactionId = ?", [txn.id]);
       draftData.goldItems = (items as any[]).map((item: any) => ({
         id: item.id,
+        metal: item.goldType || "GOLD",
         type: item.ornamentName,
         gross: item.grossWeight.toString(),
         stone: item.stoneWeight.toString(),
@@ -247,7 +248,7 @@ export async function saveTransactionValuation(transactionId: string, goldItems:
 
       await db.query(
         "INSERT INTO GoldItem (id, transactionId, goldType, ornamentName, grossWeight, stoneWeight, netWeight, purity, ratePerGram, lessPercent, addAmount, finalValue) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [crypto.randomUUID(), transactionId, "GOLD", item.type, parseFloat(item.gross), parseFloat(item.stone), netWeight, parseFloat(item.purity), parseFloat(item.rate), 0, 0, finalValue]
+        [crypto.randomUUID(), transactionId, item.metal || "GOLD", item.type, parseFloat(item.gross), parseFloat(item.stone), netWeight, parseFloat(item.purity), parseFloat(item.rate), 0, 0, finalValue]
       );
     }
     return { success: true };
@@ -353,6 +354,7 @@ export async function getPublicTransaction(txnId: string) {
     const [items] = await db.query("SELECT * FROM GoldItem WHERE transactionId = ?", [txn.id]);
     draftData.goldItems = (items as any[]).map((item: any) => ({
       id: item.id,
+      metal: item.goldType || "GOLD",
       type: item.ornamentName,
       gross: item.grossWeight.toString(),
       stone: item.stoneWeight.toString(),

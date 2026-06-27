@@ -5,7 +5,7 @@ import { Coins, Plus, Trash2, Calculator, Camera, FileText, CheckCircle2, Loader
 
 export default function GoldValuationStep({ onNext, onPrev, updateData, data, loading }: any) {
   const [items, setItems] = useState(data.goldItems.length > 0 ? data.goldItems : [
-    { id: Date.now(), type: "Chain", gross: "", stone: "0", purity: "91.6", rate: "6250" }
+    { id: Date.now(), metal: "GOLD", type: "Chain", gross: "", stone: "0", purity: "91.6", rate: "6250" }
   ]);
 
   const [lessPercent, setLessPercent] = useState(data.lessPercent || "0");
@@ -44,7 +44,7 @@ export default function GoldValuationStep({ onNext, onPrev, updateData, data, lo
   };
 
   const addItem = () => {
-    setItems([...items, { id: Date.now(), type: "", gross: "", stone: "0", purity: "91.6", rate: "6250" }]);
+    setItems([...items, { id: Date.now(), metal: "GOLD", type: "", gross: "", stone: "0", purity: "91.6", rate: "6250" }]);
   };
 
   const removeItem = (id: number) => {
@@ -239,20 +239,36 @@ export default function GoldValuationStep({ onNext, onPrev, updateData, data, lo
           <Coins className="w-6 h-6" />
         </div>
         <div>
-          <h2 className="text-xl font-bold">Gold Valuation & Photos</h2>
+          <h2 className="text-xl font-bold">Ornament Valuation & Photos</h2>
           <p className="text-sm text-slate-500">Add ornaments, set purity %, and upload required photos.</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {renderMultiPhotoBox("goldPhotos", "Gold Photos", Camera)}
+        {renderMultiPhotoBox("goldPhotos", "Ornament Photos", Camera)}
         {renderMultiPhotoBox("invoicePhotos", "Invoice/Aadhaar Photos", FileText)}
       </div>
 
       <div className="space-y-4">
         {items.map((item: any, index: number) => (
           <div key={item.id} className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4 relative group bg-white dark:bg-slate-900/40">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-8 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase text-slate-500">Metal</label>
+                <select
+                  value={item.metal || "GOLD"}
+                  onChange={(e) => {
+                    const metal = e.target.value;
+                    const defaultPurity = metal === "GOLD" ? "91.6" : "99.9";
+                    const defaultRate = metal === "GOLD" ? "6250" : "80";
+                    setItems(items.map((it: any) => it.id === item.id ? { ...it, metal, purity: defaultPurity, rate: defaultRate } : it));
+                  }}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 outline-none text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-slate-700 dark:text-slate-300"
+                >
+                  <option value="GOLD">Gold</option>
+                  <option value="SILVER">Silver</option>
+                </select>
+              </div>
               <div className="lg:col-span-2 space-y-2">
                 <label className="text-[10px] font-bold uppercase text-slate-500">Ornament Type</label>
                 <input

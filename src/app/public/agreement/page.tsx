@@ -197,7 +197,9 @@ export default function PublicAgreementPage(props: PublicAgreementPageProps) {
                 return (
                   <tr key={i}>
                     <td className="px-3 py-2">
-                      <p className="font-bold dark:text-white">{item.type}</p>
+                      <p className="font-bold dark:text-white">
+                        {item.type} <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase">({item.metal || "GOLD"})</span>
+                      </p>
                     </td>
                     <td className="px-3 py-2 text-right font-medium dark:text-slate-200">{item.gross}g</td>
                     <td className="px-3 py-2 text-right font-medium dark:text-slate-200">{item.stone}g</td>
@@ -240,7 +242,7 @@ export default function PublicAgreementPage(props: PublicAgreementPageProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2" style={{ pageBreakInside: 'avoid' }}>
            <div className="space-y-1.5">
-              <p className="text-[10px] font-bold uppercase text-slate-400">Gold Photos</p>
+              <p className="text-[10px] font-bold uppercase text-slate-400">Ornament Photos</p>
               <div className="grid grid-cols-3 gap-2">
                 {data.goldPhotos && data.goldPhotos.length > 0 ? (
                   data.goldPhotos.map((photo: string, i: number) => (
@@ -249,7 +251,7 @@ export default function PublicAgreementPage(props: PublicAgreementPageProps) {
                 ) : data.goldPhoto ? (
                   <img src={data.goldPhoto} className="w-full h-20 rounded-lg object-cover border border-slate-200" />
                 ) : (
-                  <p className="text-slate-400 italic text-[10px]">No gold photos uploaded</p>
+                  <p className="text-slate-400 italic text-[10px]">No ornament photos uploaded</p>
                 )}
               </div>
            </div>

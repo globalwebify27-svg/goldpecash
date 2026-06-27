@@ -4,7 +4,7 @@ import {
   Filter, 
   Download, 
 } from "lucide-react";
-import { getCustomers } from "@/lib/data";
+import { getCustomers, getBranches } from "@/lib/data";
 import { auth } from "@/auth";
 import CustomerTable from "@/components/dashboard/CustomerTable";
 
@@ -14,7 +14,10 @@ export default async function CustomersPage() {
   const userBranchId = (session?.user as any)?.branchId;
   const filterBranchId = userRole === "SUPER_ADMIN" ? undefined : userBranchId;
 
-  const customers = await getCustomers(filterBranchId);
+  const [customers, branches] = await Promise.all([
+    getCustomers(filterBranchId),
+    getBranches(),
+  ]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -26,7 +29,13 @@ export default async function CustomersPage() {
 
       </div>
 
-      <CustomerTable customers={customers} />
+      <CustomerTable 
+        customers={customers} 
+        branches={branches}
+        userRole={userRole}
+        userBranchId={userBranchId}
+      />
     </div>
   );
 }
+

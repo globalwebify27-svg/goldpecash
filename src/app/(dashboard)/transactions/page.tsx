@@ -1,4 +1,4 @@
-import { getAllTransactions } from "@/lib/data";
+import { getAllTransactions, getBranches } from "@/lib/data";
 import { auth } from "@/auth";
 import TransactionsTable from "@/components/dashboard/TransactionsTable";
 
@@ -8,7 +8,10 @@ export default async function TransactionsPage() {
   const userBranchId = (session?.user as any)?.branchId;
   const filterBranchId = userRole === "SUPER_ADMIN" ? undefined : userBranchId;
 
-  const transactions = await getAllTransactions(filterBranchId);
+  const [transactions, branches] = await Promise.all([
+    getAllTransactions(filterBranchId),
+    getBranches(),
+  ]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -19,7 +22,12 @@ export default async function TransactionsPage() {
         </div>
       </div>
 
-      <TransactionsTable transactions={transactions} />
+      <TransactionsTable 
+        transactions={transactions} 
+        branches={branches}
+        userRole={userRole}
+        userBranchId={userBranchId}
+      />
     </div>
   );
 }

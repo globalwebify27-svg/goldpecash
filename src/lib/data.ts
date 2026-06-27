@@ -86,14 +86,29 @@ export async function getCustomers(branchId?: string) {
   try {
     if (branchId) {
       const [rows] = await db.query(`
-        SELECT * FROM Customer 
-        WHERE branchId = ?
-        ORDER BY createdAt DESC
+        SELECT c.*, 
+               COALESCE(SUM(t.finalAmount), 0) as totalAmount,
+               COUNT(t.id) as transactionCount,
+               GROUP_CONCAT(DISTINCT t.paymentMethod SEPARATOR ', ') as paymentMethods
+        FROM Customer c
+        LEFT JOIN \`Transaction\` t ON c.id = t.customerId AND t.status = 'COMPLETED'
+        WHERE c.branchId = ?
+        GROUP BY c.id
+        ORDER BY c.createdAt DESC
       `, [branchId]);
       return rows as any[];
     }
     
-    const [rows] = await db.query("SELECT * FROM Customer ORDER BY createdAt DESC");
+    const [rows] = await db.query(`
+      SELECT c.*, 
+             COALESCE(SUM(t.finalAmount), 0) as totalAmount,
+             COUNT(t.id) as transactionCount,
+             GROUP_CONCAT(DISTINCT t.paymentMethod SEPARATOR ', ') as paymentMethods
+      FROM Customer c
+      LEFT JOIN \`Transaction\` t ON c.id = t.customerId AND t.status = 'COMPLETED'
+      GROUP BY c.id
+      ORDER BY c.createdAt DESC
+    `);
     return rows as any[];
   } catch (error) {
     console.error("Error fetching customers:", error);
