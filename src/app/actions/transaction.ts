@@ -120,10 +120,29 @@ export async function getDraftTransaction(aadhaar: string, isNewMode: boolean = 
   }
 }
 
+async function resolveBranchId(branchId: string | null | undefined): Promise<string> {
+  if (!branchId || branchId === "DEFAULT_BRANCH") {
+    const [branches] = await db.query("SELECT id FROM Branch WHERE status = 'ACTIVE' LIMIT 1");
+    if ((branches as any[]).length > 0) {
+      return (branches as any[])[0].id;
+    }
+  } else {
+    const [branches] = await db.query("SELECT id FROM Branch WHERE id = ?", [branchId]);
+    if ((branches as any[]).length > 0) {
+      return branchId;
+    }
+    const [fallbackBranches] = await db.query("SELECT id FROM Branch WHERE status = 'ACTIVE' LIMIT 1");
+    if ((fallbackBranches as any[]).length > 0) {
+      return (fallbackBranches as any[])[0].id;
+    }
+  }
+  return "DEFAULT_BRANCH";
+}
+
 export async function saveCustomer(data: any) {
   try {
     const { aadhaarNumber, fullName, dob, gender, mobile, address, currentAddress, refName, refMobile, refRelation } = data;
-    const branchId = data.branchId || "DEFAULT_BRANCH";
+    const branchId = await resolveBranchId(data.branchId);
     const createdBy = data.createdBy || "SYSTEM";
 
     // Find or Create Customer
@@ -137,8 +156,8 @@ export async function saveCustomer(data: any) {
       customerId = (existingCustomers as any[])[0].id;
       // Update existing customer info
       await db.query(
-        "UPDATE Customer SET fullName = ?, dob = ?, gender = ?, mobile = ?, address = ?, currentAddress = ?, refName = ?, refMobile = ?, refRelation = ?, updatedAt = NOW(3) WHERE id = ?",
-        [fullName, dob ? new Date(dob) : null, gender, mobile, address, currentAddress, refName || null, refMobile || null, refRelation || null, customerId]
+        "UPDATE Customer SET fullName = ?, dob = ?, gender = ?, mobile = ?, address = ?, currentAddress = ?, refName = ?, refMobile = ?, refRelation = ?, branchId = ?, updatedAt = NOW(3) WHERE id = ?",
+        [fullName, dob ? new Date(dob) : null, gender, mobile, address, currentAddress, refName || null, refMobile || null, refRelation || null, branchId, customerId]
       );
     } else {
       customerId = crypto.randomUUID();
@@ -159,7 +178,7 @@ export async function saveCustomer(data: any) {
 export async function saveTransactionDraft(data: any) {
   try {
     const { customerId, transactionId: existingTxnId } = data;
-    const branchId = data.branchId || "DEFAULT_BRANCH";
+    const branchId = await resolveBranchId(data.branchId);
     const createdBy = data.createdBy || "SYSTEM";
     
     let transactionId = existingTxnId;
