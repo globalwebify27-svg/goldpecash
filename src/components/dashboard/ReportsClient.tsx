@@ -70,6 +70,18 @@ export default function ReportsClient({
   const completedTxns = filteredTxns.filter(tx => tx.status === "COMPLETED").length;
   const completionRate = filteredTotalTxns > 0 ? ((completedTxns / filteredTotalTxns) * 100).toFixed(0) : "0";
 
+  const formatWeight = (tx: any, isCsv: boolean = false) => {
+    const gW = parseFloat(tx.goldWeight) || 0;
+    const sW = parseFloat(tx.silverWeight) || 0;
+    if (gW > 0 && sW > 0) {
+      return `Gold: ${gW}g, Silver: ${sW}g`;
+    }
+    if (sW > 0) {
+      return isCsv ? `${sW}` : `${sW}g (Silver)`;
+    }
+    return isCsv ? `${tx.totalWeight || 0}` : `${tx.totalWeight || 0}g`;
+  };
+
   // Generate CSV Report
   const handleExportCSV = () => {
     const headers = ["Transaction Number", "Customer Name", "Aadhaar Number", "Ornaments", "Purity", "Weight (g)", "Amount (INR)", "Status", "Date", "Branch"];
@@ -83,7 +95,7 @@ export default function ReportsClient({
           `"${String(tx.aadhaarNumber || '').replace(/"/g, '""')}"`,
           `"${String(tx.ornaments || '').replace(/"/g, '""')}"`,
           `"${String(tx.purities || '').replace(/"/g, '""')}"`,
-          `"${tx.totalWeight}"`,
+          `"${formatWeight(tx, true)}"`,
           `"${tx.finalAmount}"`,
           `"${tx.status}"`,
           `"${new Date(tx.createdAt).toLocaleDateString('en-IN')}"`,
@@ -450,7 +462,7 @@ export default function ReportsClient({
                   <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
                     {tx.purities || "-"}
                   </td>
-                  <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{tx.totalWeight}g</td>
+                  <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{formatWeight(tx)}</td>
                   <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">
                     ₹{(tx.finalAmount || 0).toLocaleString('en-IN')}
                   </td>

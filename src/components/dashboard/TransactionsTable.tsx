@@ -64,6 +64,18 @@ export default function TransactionsTable({ transactions, branches, userRole, us
     return matchesSearch && matchesStatus && matchesBranch && matchesDate;
   });
 
+  const formatWeight = (tx: any, isCsv: boolean = false) => {
+    const gW = parseFloat(tx.goldWeight) || 0;
+    const sW = parseFloat(tx.silverWeight) || 0;
+    if (gW > 0 && sW > 0) {
+      return `Gold: ${gW}g, Silver: ${sW}g`;
+    }
+    if (sW > 0) {
+      return isCsv ? `${sW}` : `${sW}g (Silver)`;
+    }
+    return isCsv ? `${tx.totalWeight || 0}` : `${tx.totalWeight || 0}g`;
+  };
+
   const handleExportCSV = () => {
     const headers = ["Transaction Number", "Customer Name", "Branch", "Aadhaar Number", "Weight (g)", "Amount (INR)", "Status", "Date"];
     const csvContent = [
@@ -73,7 +85,7 @@ export default function TransactionsTable({ transactions, branches, userRole, us
         `"${String(tx.customerName || '').replace(/"/g, '""')}"`,
         `"${String(branches.find(b => b.id === tx.branchId)?.name || 'Unknown').replace(/"/g, '""')}"`,
         `"${String(tx.aadhaarNumber || '').replace(/"/g, '""')}"`,
-        `"${tx.totalWeight}"`,
+        `"${formatWeight(tx, true)}"`,
         `"${tx.finalAmount}"`,
         `"${tx.status}"`,
         `"${new Date(tx.createdAt).toLocaleDateString('en-IN')}"`
@@ -115,7 +127,7 @@ export default function TransactionsTable({ transactions, branches, userRole, us
 Thank you for transacting with GPC Ornaments (OPC) Private Limited.
 
 *Transaction Number*: ${tx.transactionNumber}
-*Total Weight*: ${tx.totalWeight}g
+*Weight*: ${formatWeight(tx)}
 *Payout Amount*: ₹${(tx.finalAmount || 0).toLocaleString("en-IN")}
 *Status*: ${tx.status}
 
@@ -261,7 +273,7 @@ Thank you for choosing Gold Pe Cash!`;
             
             <div className="flex justify-between items-end">
               <div className="text-sm">
-                <p className="text-slate-500">Weight: <span className="font-medium text-slate-900 dark:text-white">{tx.totalWeight}g</span></p>
+                <p className="text-slate-500">Weight: <span className="font-medium text-slate-900 dark:text-white">{formatWeight(tx)}</span></p>
                 <p className="text-slate-500">Date: <span className="font-medium text-slate-900 dark:text-white">{new Date(tx.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span></p>
               </div>
               <div className="text-right">
@@ -323,7 +335,7 @@ Thank you for choosing Gold Pe Cash!`;
                 <td className="px-6 py-4">
                   <p className="font-bold text-slate-900 dark:text-white">{tx.customerName}</p>
                 </td>
-                <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{tx.totalWeight}g</td>
+                <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{formatWeight(tx)}</td>
                 <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">
                   ₹{(tx.finalAmount || 0).toLocaleString('en-IN')}
                 </td>

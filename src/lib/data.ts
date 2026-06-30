@@ -68,7 +68,17 @@ export async function getRecentTransactions(branchId?: string) {
         c.fullName as customerName, 
         c.customerCode,
         c.aadhaarNumber,
-        c.mobile
+        c.mobile,
+        (
+          SELECT COALESCE(SUM(gi.grossWeight), 0)
+          FROM GoldItem gi
+          WHERE gi.transactionId = t.id AND gi.goldType = 'GOLD'
+        ) as goldWeight,
+        (
+          SELECT COALESCE(SUM(gi.grossWeight), 0)
+          FROM GoldItem gi
+          WHERE gi.transactionId = t.id AND gi.goldType = 'SILVER'
+        ) as silverWeight
       FROM Transaction t
       JOIN Customer c ON t.customerId = c.id
       ${whereClause}
@@ -186,7 +196,17 @@ export async function getAllTransactions(branchId?: string) {
           SELECT GROUP_CONCAT(CONCAT(gi.purity, '%') SEPARATOR ', ')
           FROM GoldItem gi
           WHERE gi.transactionId = t.id
-        ) as purities
+        ) as purities,
+        (
+          SELECT COALESCE(SUM(gi.grossWeight), 0)
+          FROM GoldItem gi
+          WHERE gi.transactionId = t.id AND gi.goldType = 'GOLD'
+        ) as goldWeight,
+        (
+          SELECT COALESCE(SUM(gi.grossWeight), 0)
+          FROM GoldItem gi
+          WHERE gi.transactionId = t.id AND gi.goldType = 'SILVER'
+        ) as silverWeight
       FROM Transaction t
       JOIN Customer c ON t.customerId = c.id
       ${whereClause}
