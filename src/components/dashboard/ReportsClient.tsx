@@ -92,11 +92,23 @@ export default function ReportsClient({
       })
     ].join("\n");
 
+    const filename = `reports_export_${selectedBranch.toLowerCase()}_${new Date().toISOString().slice(0,10)}.csv`;
+
+    // Check if running inside Flutter Webview
+    if (typeof window !== 'undefined' && (window as any).FlutterDownloadChannel) {
+      const base64Data = btoa(unescape(encodeURIComponent(csvContent)));
+      (window as any).FlutterDownloadChannel.postMessage(JSON.stringify({
+        filename,
+        base64Data
+      }));
+      return;
+    }
+
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `reports_export_${selectedBranch.toLowerCase()}_${new Date().toISOString().slice(0,10)}.csv`);
+    link.setAttribute("download", filename);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
