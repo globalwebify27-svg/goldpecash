@@ -72,7 +72,7 @@ export default function ReportsClient({
 
   // Generate CSV Report
   const handleExportCSV = () => {
-    const headers = ["Transaction Number", "Customer Name", "Aadhaar Number", "Weight (g)", "Amount (INR)", "Status", "Date", "Branch"];
+    const headers = ["Transaction Number", "Customer Name", "Aadhaar Number", "Ornaments", "Purity", "Weight (g)", "Amount (INR)", "Status", "Date", "Branch"];
     const csvContent = [
       headers.join(","),
       ...filteredTxns.map(tx => {
@@ -81,6 +81,8 @@ export default function ReportsClient({
           `"${String(tx.transactionNumber || '').replace(/"/g, '""')}"`,
           `"${String(tx.customerName || '').replace(/"/g, '""')}"`,
           `"${String(tx.aadhaarNumber || '').replace(/"/g, '""')}"`,
+          `"${String(tx.ornaments || '').replace(/"/g, '""')}"`,
+          `"${String(tx.purities || '').replace(/"/g, '""')}"`,
           `"${tx.totalWeight}"`,
           `"${tx.finalAmount}"`,
           `"${tx.status}"`,
@@ -410,6 +412,8 @@ export default function ReportsClient({
               <tr className="bg-slate-50/50 dark:bg-slate-900/50 text-[10px] uppercase font-bold text-slate-400 tracking-widest">
                 <th className="px-6 py-4">Transaction ID</th>
                 <th className="px-6 py-4">Customer</th>
+                <th className="px-6 py-4">Ornaments</th>
+                <th className="px-6 py-4">Purity</th>
                 <th className="px-6 py-4">Weight</th>
                 <th className="px-6 py-4">Amount</th>
                 <th className="px-6 py-4">Status</th>
@@ -427,6 +431,12 @@ export default function ReportsClient({
                       <p className="font-bold text-slate-900 dark:text-white">{tx.customerName}</p>
                       <p className="text-xs text-slate-400 font-mono">Aadhaar: XXXX-XXXX-{tx.aadhaarNumber?.slice(-4)}</p>
                     </div>
+                  </td>
+                  <td className="px-6 py-4 text-slate-600 dark:text-slate-400 max-w-[200px] truncate" title={tx.ornaments}>
+                    {tx.ornaments || "-"}
+                  </td>
+                  <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                    {tx.purities || "-"}
                   </td>
                   <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{tx.totalWeight}g</td>
                   <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">
@@ -447,7 +457,7 @@ export default function ReportsClient({
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500 italic">
+                  <td colSpan={8} className="px-6 py-12 text-center text-slate-500 italic">
                     No transactions found.
                   </td>
                 </tr>

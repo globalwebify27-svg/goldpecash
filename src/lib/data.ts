@@ -176,7 +176,17 @@ export async function getAllTransactions(branchId?: string) {
         c.fullName as customerName, 
         c.customerCode,
         c.aadhaarNumber,
-        c.mobile
+        c.mobile,
+        (
+          SELECT GROUP_CONCAT(CONCAT(gi.ornamentName, ' (', gi.goldType, ')') SEPARATOR ', ')
+          FROM GoldItem gi
+          WHERE gi.transactionId = t.id
+        ) as ornaments,
+        (
+          SELECT GROUP_CONCAT(CONCAT(gi.purity, '%') SEPARATOR ', ')
+          FROM GoldItem gi
+          WHERE gi.transactionId = t.id
+        ) as purities
       FROM Transaction t
       JOIN Customer c ON t.customerId = c.id
       ${whereClause}
