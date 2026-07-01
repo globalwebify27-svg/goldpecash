@@ -113,7 +113,7 @@ Thank you for choosing Gold Pe Cash!`;
           <img src="/logo.webp" alt="Gold Pe Cash" className="h-14 mx-auto object-contain mb-1" />
           <p className="text-[11px] font-bold uppercase text-slate-800 dark:text-slate-100">GPC ORNAMANETS (OPC) PRIVATE LIMITED</p>
           <p className="text-[9px] font-bold tracking-widest uppercase text-slate-500">Premium Gold Buying Service</p>
-          <p className="text-[10px] text-slate-400">Authorized Branch: {user?.branchName || "Main Branch"} | Agreement: Pending</p>
+          <p className="text-[10px] text-slate-400">Authorized Branch: {data.branchName || user?.branchName || "Main Branch"} | Agreement: Pending</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-b pb-4">

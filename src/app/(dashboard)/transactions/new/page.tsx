@@ -57,6 +57,8 @@ export default function NewTransactionPage() {
     signature: null,
     customerId: null,
     transactionId: null,
+    branchId: "",
+    branchName: "",
   });
 
   const [saving, setSaving] = useState(false);
@@ -114,7 +116,9 @@ export default function NewTransactionPage() {
           ...prev, 
           customerId: res.customerId, 
           transactionId: txnRes.transactionId,
-          transactionNumber: txnRes.transactionNumber
+          transactionNumber: txnRes.transactionNumber,
+          branchId: txnRes.branchId || "",
+          branchName: txnRes.branchName || ""
         }));
       } 
       else if (currentStep === 2) { // Photo Capture Step
@@ -137,7 +141,9 @@ export default function NewTransactionPage() {
           setFormData(prev => ({ 
             ...prev, 
             transactionId: txnId,
-            transactionNumber: txnRes.transactionNumber
+            transactionNumber: txnRes.transactionNumber,
+            branchId: txnRes.branchId || "",
+            branchName: txnRes.branchName || ""
           }));
         }
 

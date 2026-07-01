@@ -29,7 +29,10 @@ export async function searchCustomer(query: string) {
 
 export async function getDraftTransaction(aadhaar: string, isNewMode: boolean = false, txnId?: string) {
   try {
-    const [customers] = await db.query("SELECT * FROM Customer WHERE aadhaarNumber = ?", [aadhaar]);
+    const [customers] = await db.query(
+      "SELECT c.*, b.name as branchName FROM Customer c LEFT JOIN Branch b ON c.branchId = b.id WHERE c.aadhaarNumber = ?",
+      [aadhaar]
+    );
     if ((customers as any[]).length === 0) return { success: false, message: "Customer not found" };
     
     const customer = (customers as any[])[0];
@@ -37,13 +40,13 @@ export async function getDraftTransaction(aadhaar: string, isNewMode: boolean = 
     let transactions: any[] = [];
     if (txnId) {
       const [txns] = await db.query(
-        "SELECT * FROM `Transaction` WHERE id = ?",
+        "SELECT t.*, b.name as branchName FROM `Transaction` t LEFT JOIN Branch b ON t.branchId = b.id WHERE t.id = ?",
         [txnId]
       );
       transactions = txns as any[];
     } else if (!isNewMode) {
       const [txns] = await db.query(
-        "SELECT * FROM `Transaction` WHERE customerId = ? AND status = 'PENDING' ORDER BY createdAt DESC LIMIT 1",
+        "SELECT t.*, b.name as branchName FROM `Transaction` t LEFT JOIN Branch b ON t.branchId = b.id WHERE t.customerId = ? AND t.status = 'PENDING' ORDER BY t.createdAt DESC LIMIT 1",
         [customer.id]
       );
       transactions = txns as any[];
@@ -67,6 +70,8 @@ export async function getDraftTransaction(aadhaar: string, isNewMode: boolean = 
       goldPhoto: null,
       invoicePhoto: null,
       signature: null,
+      branchId: customer.branchId,
+      branchName: customer.branchName || "Main Branch",
     };
 
     // Get documents (Customer Photo usually saved even without transaction)
@@ -98,6 +103,8 @@ export async function getDraftTransaction(aadhaar: string, isNewMode: boolean = 
       draftData.paymentMethod = txn.paymentMethod || "CASH";
       draftData.lessPercent = txn.lessPercent || 0;
       draftData.addAmount = txn.addAmount || 0;
+      draftData.branchId = txn.branchId;
+      draftData.branchName = txn.branchName || "Main Branch";
       
       const [items] = await db.query("SELECT * FROM GoldItem WHERE transactionId = ?", [txn.id]);
       draftData.goldItems = (items as any[]).map((item: any) => ({
@@ -185,21 +192,46 @@ export async function saveTransactionDraft(data: any) {
     let transactionNumber;
 
     if (transactionId) {
-      // Update existing draft if needed (usually just checking if it exists)
+      // Update existing draft with current branch and creator
+      const [branches] = await db.query("SELECT name FROM Branch WHERE id = ?", [branchId]);
+      const branchName = (branches as any[]).length > 0 ? (branches as any[])[0].name : "Main Branch";
+      const cleanBranch = branchName.replace(/\s+/g, "").replace(/branch/gi, "");
+
       const [rows] = await db.query("SELECT transactionNumber FROM `Transaction` WHERE id = ?", [transactionId]);
       if ((rows as any[]).length > 0) {
-        transactionNumber = (rows as any[])[0].transactionNumber;
+        const oldNumber = (rows as any[])[0].transactionNumber;
+        // Keep the original sequential number but update the branch name prefix if format matches
+        const parts = oldNumber.split("/");
+        if (parts.length >= 4) {
+          parts[1] = cleanBranch;
+          transactionNumber = parts.join("/");
+        } else {
+          transactionNumber = oldNumber;
+        }
+
+        await db.query(
+          "UPDATE `Transaction` SET branchId = ?, createdBy = ?, transactionNumber = ?, updatedAt = NOW(3) WHERE id = ?",
+          [branchId, createdBy, transactionNumber, transactionId]
+        );
       }
     } else {
       transactionId = crypto.randomUUID();
-      transactionNumber = `GPC/BR001/2026/${Math.floor(10000 + Math.random() * 90000)}`;
+      // Fetch branch name
+      const [branches] = await db.query("SELECT name FROM Branch WHERE id = ?", [branchId]);
+      const branchName = (branches as any[]).length > 0 ? (branches as any[])[0].name : "Main Branch";
+      const cleanBranch = branchName.replace(/\s+/g, "").replace(/branch/gi, "");
+      transactionNumber = `GPC/${cleanBranch}/2026/${Math.floor(10000 + Math.random() * 90000)}`;
       await db.query(
         "INSERT INTO `Transaction` (id, transactionNumber, customerId, branchId, createdBy, status, updatedAt) VALUES (?, ?, ?, ?, ?, ?, NOW(3))",
         [transactionId, transactionNumber, customerId, branchId, createdBy, "PENDING"]
       );
     }
 
-    return { success: true, transactionId, transactionNumber };
+    // Fetch branch name to return
+    const [branches] = await db.query("SELECT name FROM Branch WHERE id = ?", [branchId]);
+    const branchName = (branches as any[]).length > 0 ? (branches as any[])[0].name : "Main Branch";
+
+    return { success: true, transactionId, transactionNumber, branchId, branchName };
   } catch (error) {
     console.error("Error saving transaction draft:", error);
     return { success: false, error: (error as any).message };
