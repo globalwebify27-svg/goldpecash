@@ -19,6 +19,12 @@ export default function Header({ user }: { user: any }) {
             <Menu className="w-6 h-6" />
           </button>
           
+          {user.branchName && (
+            <span className="text-xs font-bold px-2.5 py-1 rounded-xl bg-primary/10 text-primary border border-primary/20 whitespace-nowrap shadow-sm">
+              {user.branchName}
+            </span>
+          )}
+          
           <div className="relative max-w-md w-full hidden sm:block">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 

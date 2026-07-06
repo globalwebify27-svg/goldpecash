@@ -16,6 +16,7 @@ export default async function DashboardPage() {
   const session = await auth();
   const userRole = (session?.user as any)?.role;
   const userBranchId = (session?.user as any)?.branchId;
+  const branchName = (session?.user as any)?.branchName;
   
   // Filter by branch if not Super Admin
   const filterBranchId = userRole === "SUPER_ADMIN" ? undefined : userBranchId;
@@ -59,8 +60,17 @@ export default async function DashboardPage() {
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Dashboard Overview</h1>
-          <p className="text-slate-500 dark:text-slate-400">Welcome back, here's what's happening today.</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            Dashboard Overview
+            {branchName && (
+              <span className="text-sm font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                {branchName}
+              </span>
+            )}
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400">
+            Welcome back! Here's what's happening at <span className="font-semibold text-slate-700 dark:text-slate-300">{branchName || "All Branches"}</span> today.
+          </p>
         </div>
         <AddEnquiryButton branchId={userBranchId} userId={session?.user?.id} />
       </div>
