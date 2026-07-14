@@ -1,6 +1,7 @@
 "use server";
 
 import db from "@/lib/db";
+import { auth } from "@/auth";
 
 export async function searchCustomer(query: string) {
   try {
@@ -127,7 +128,7 @@ export async function getDraftTransaction(aadhaar: string, isNewMode: boolean = 
   }
 }
 
-async function resolveBranchId(branchId: string | null | undefined): Promise<string> {
+export async function resolveBranchId(branchId: string | null | undefined): Promise<string> {
   if (!branchId || branchId === "DEFAULT_BRANCH") {
     const [branches] = await db.query("SELECT id FROM Branch WHERE status = 'ACTIVE' LIMIT 1");
     if ((branches as any[]).length > 0) {
@@ -149,8 +150,16 @@ async function resolveBranchId(branchId: string | null | undefined): Promise<str
 export async function saveCustomer(data: any) {
   try {
     const { aadhaarNumber, fullName, dob, gender, mobile, address, currentAddress, refName, refMobile, refRelation } = data;
-    const branchId = await resolveBranchId(data.branchId);
-    const createdBy = data.createdBy || "SYSTEM";
+    
+    // Server-side session verification to enforce user's branch
+    const session = await auth();
+    const userRole = (session?.user as any)?.role;
+    let targetBranchId = data.branchId;
+    if (userRole !== "SUPER_ADMIN" && session?.user) {
+      targetBranchId = (session.user as any).branchId;
+    }
+    const branchId = await resolveBranchId(targetBranchId);
+    const createdBy = session?.user?.id || data.createdBy || "SYSTEM";
 
     // Find or Create Customer
     const [existingCustomers] = await db.query(
@@ -185,8 +194,16 @@ export async function saveCustomer(data: any) {
 export async function saveTransactionDraft(data: any) {
   try {
     const { customerId, transactionId: existingTxnId } = data;
-    const branchId = await resolveBranchId(data.branchId);
-    const createdBy = data.createdBy || "SYSTEM";
+    
+    // Server-side session verification to enforce user's branch
+    const session = await auth();
+    const userRole = (session?.user as any)?.role;
+    let targetBranchId = data.branchId;
+    if (userRole !== "SUPER_ADMIN" && session?.user) {
+      targetBranchId = (session.user as any).branchId;
+    }
+    const branchId = await resolveBranchId(targetBranchId);
+    const createdBy = session?.user?.id || data.createdBy || "SYSTEM";
     
     let transactionId = existingTxnId;
     let transactionNumber;

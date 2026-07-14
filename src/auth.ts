@@ -54,14 +54,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig.callbacks,
     async jwt({ token, user }) {
       if (user) {
+        token.id = user.id;
         token.role = (user as any).role;
         token.branchId = (user as any).branchId;
         token.branchName = (user as any).branchName;
+      } else if (token.id) {
+        try {
+          const [rows] = await db.query(
+            "SELECT u.role, u.branchId, b.name as branchName FROM User u LEFT JOIN Branch b ON u.branchId = b.id WHERE u.id = ?",
+            [token.id]
+          );
+          const dbUser = (rows as any[])[0];
+          if (dbUser) {
+            token.role = dbUser.role;
+            token.branchId = dbUser.branchId;
+            token.branchName = dbUser.branchName;
+          }
+        } catch (error) {
+          console.error("Error refreshing token from database:", error);
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
+        session.user.id = token.id as string;
         (session.user as any).role = token.role;
         (session.user as any).branchId = token.branchId;
         (session.user as any).branchName = token.branchName;
