@@ -71,6 +71,8 @@ Thank you for transacting with GPC Ornaments (OPC) Private Limited.
 You can view and print your digitally signed purchase agreement here:
 ${window.location.origin}/public/agreement?txnId=${data.transactionId}
 
+Know the latest rate of gold and silver: https://goldpecash.com/
+
 Thank you for choosing Gold Pe Cash!`;
 
     const encodedMessage = encodeURIComponent(message);
