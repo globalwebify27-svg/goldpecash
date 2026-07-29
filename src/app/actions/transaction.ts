@@ -246,11 +246,12 @@ export async function saveTransactionDraft(data: any) {
       );
     }
 
-    // Fetch branch name to return
-    const [branches] = await db.query("SELECT name FROM Branch WHERE id = ?", [branchId]);
+    // Fetch branch name and review link to return
+    const [branches] = await db.query("SELECT name, googleReviewUrl FROM Branch WHERE id = ?", [branchId]);
     const branchName = (branches as any[]).length > 0 ? (branches as any[])[0].name : "Main Branch";
+    const googleReviewUrl = (branches as any[]).length > 0 ? (branches as any[])[0].googleReviewUrl : null;
 
-    return { success: true, transactionId, transactionNumber, branchId, branchName };
+    return { success: true, transactionId, transactionNumber, branchId, branchName, googleReviewUrl };
   } catch (error) {
     console.error("Error saving transaction draft:", error);
     return { success: false, error: (error as any).message };
@@ -367,7 +368,7 @@ export async function markAsFraud(customerId: string, reason: string) {
 export async function getPublicTransaction(txnId: string) {
   try {
     const [txns] = await db.query(
-      "SELECT t.*, b.name as branchName FROM `Transaction` t LEFT JOIN Branch b ON t.branchId = b.id WHERE t.id = ?",
+      "SELECT t.*, b.name as branchName, b.googleReviewUrl FROM `Transaction` t LEFT JOIN Branch b ON t.branchId = b.id WHERE t.id = ?",
       [txnId]
     );
     if ((txns as any[]).length === 0) return { success: false, message: "Transaction not found" };
@@ -397,6 +398,7 @@ export async function getPublicTransaction(txnId: string) {
       lessPercent: txn.lessPercent || 0,
       addAmount: txn.addAmount || 0,
       branchName: txn.branchName || "Main Branch",
+      googleReviewUrl: txn.googleReviewUrl || null,
       goldItems: [],
       photo: null,
       goldPhoto: null,

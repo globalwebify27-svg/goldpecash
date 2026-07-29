@@ -118,7 +118,8 @@ export default function NewTransactionPage() {
           transactionId: txnRes.transactionId,
           transactionNumber: txnRes.transactionNumber,
           branchId: txnRes.branchId || "",
-          branchName: txnRes.branchName || ""
+          branchName: txnRes.branchName || "",
+          googleReviewUrl: txnRes.googleReviewUrl || prev.googleReviewUrl
         }));
       } 
       else if (currentStep === 2) { // Photo Capture Step
@@ -143,7 +144,8 @@ export default function NewTransactionPage() {
             transactionId: txnId,
             transactionNumber: txnRes.transactionNumber,
             branchId: txnRes.branchId || "",
-            branchName: txnRes.branchName || ""
+            branchName: txnRes.branchName || "",
+            googleReviewUrl: txnRes.googleReviewUrl || prev.googleReviewUrl
           }));
         }
 
