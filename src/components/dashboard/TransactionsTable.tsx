@@ -132,7 +132,7 @@ Thank you for transacting with GPC Ornaments (OPC) Private Limited.
 *Status*: ${tx.status}
 
 You can view and print your digitally signed purchase agreement here:
-${window.location.origin}/public/agreement?txnId=${tx.id}
+${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/public/agreement?txnId=${tx.id}
 
 Know the latest rate of gold and silver: https://goldpecash.com/
 
@@ -286,11 +286,8 @@ Thank you for choosing Gold Pe Cash!`;
                       <Pencil className="w-4 h-4" />
                     </Link>
                   )}
-                  <Link href={`/transactions/new?aadhaar=${tx.aadhaarNumber}&txnId=${tx.id}`} className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400" title="View">
-                    <FileText className="w-4 h-4" />
-                  </Link>
-                  <Link href={`/transactions/new?aadhaar=${tx.aadhaarNumber}&txnId=${tx.id}&print=true`} className="p-2 rounded-lg bg-primary/10 text-primary" title="Print">
-                    <Printer className="w-4 h-4" />
+                  <Link href={`/public/agreement?txnId=${tx.id}`} target="_blank" className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400" title="Show Agreement">
+                    <Eye className="w-4 h-4" />
                   </Link>
                   {tx.status === 'COMPLETED' && (
                     <button 
@@ -365,11 +362,8 @@ Thank you for choosing Gold Pe Cash!`;
                         <Pencil className="w-4 h-4" />
                       </Link>
                     )}
-                    <Link href={`/transactions/new?aadhaar=${tx.aadhaarNumber}&txnId=${tx.id}`} className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 hover:premium-shadow transition-all text-slate-400 hover:text-primary" title="View Agreement">
-                      <FileText className="w-4 h-4" />
-                    </Link>
-                    <Link href={`/transactions/new?aadhaar=${tx.aadhaarNumber}&txnId=${tx.id}&print=true`} className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 hover:premium-shadow transition-all text-slate-400 hover:text-primary" title="Print Receipt">
-                      <Printer className="w-4 h-4" />
+                    <Link href={`/public/agreement?txnId=${tx.id}`} target="_blank" className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 hover:premium-shadow transition-all text-slate-400 hover:text-primary" title="Show Agreement">
+                      <Eye className="w-4 h-4" />
                     </Link>
                     {tx.status === 'COMPLETED' && (
                       <button 

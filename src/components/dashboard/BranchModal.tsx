@@ -131,6 +131,19 @@ export default function BranchModal({ onClose, branch }: { onClose: () => void; 
             </div>
           </div>
 
+          <div className="space-y-1">
+            <label className="text-xs sm:text-sm font-semibold ml-1">Google Review Link / Maps URL</label>
+            <div className="relative">
+              <input 
+                name="googleReviewUrl"
+                type="url"
+                defaultValue={branch?.googleReviewUrl || ""}
+                placeholder="https://g.page/r/... or Google Search review link"
+                className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-primary outline-none transition-all text-sm"
+              />
+            </div>
+          </div>
+
           {isEdit && (
             <div className="space-y-1">
               <label className="text-xs sm:text-sm font-semibold ml-1">Status</label>

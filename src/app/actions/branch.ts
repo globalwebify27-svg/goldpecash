@@ -11,6 +11,7 @@ export async function createBranchAction(formData: FormData) {
     const phone = formData.get("phone") as string;
     const managerName = formData.get("managerName") as string;
     const address = formData.get("address") as string;
+    const googleReviewUrl = formData.get("googleReviewUrl") as string || null;
 
     // Basic validation
     if (!name || !code || !phone || !managerName || !address) {
@@ -22,8 +23,8 @@ export async function createBranchAction(formData: FormData) {
 
     // Insert into DB
     await db.query(
-      "INSERT INTO Branch (id, name, code, phone, managerName, address, city, status, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [id, name, code, phone, managerName, address, "Default City", "ACTIVE", now]
+      "INSERT INTO Branch (id, name, code, phone, managerName, address, city, googleReviewUrl, status, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [id, name, code, phone, managerName, address, "Default City", googleReviewUrl, "ACTIVE", now]
     );
 
     revalidatePath("/branches");
@@ -44,6 +45,7 @@ export async function updateBranchAction(branchId: string, formData: FormData) {
     const phone = formData.get("phone") as string;
     const managerName = formData.get("managerName") as string;
     const address = formData.get("address") as string;
+    const googleReviewUrl = formData.get("googleReviewUrl") as string || null;
     const status = formData.get("status") as string || "ACTIVE";
 
     // Basic validation
@@ -52,8 +54,8 @@ export async function updateBranchAction(branchId: string, formData: FormData) {
     }
 
     await db.query(
-      "UPDATE Branch SET name = ?, code = ?, phone = ?, managerName = ?, address = ?, status = ?, updatedAt = NOW(3) WHERE id = ?",
-      [name, code, phone, managerName, address, status, branchId]
+      "UPDATE Branch SET name = ?, code = ?, phone = ?, managerName = ?, address = ?, googleReviewUrl = ?, status = ?, updatedAt = NOW(3) WHERE id = ?",
+      [name, code, phone, managerName, address, googleReviewUrl, status, branchId]
     );
 
     revalidatePath("/branches");

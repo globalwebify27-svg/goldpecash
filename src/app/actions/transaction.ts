@@ -31,7 +31,7 @@ export async function searchCustomer(query: string) {
 export async function getDraftTransaction(aadhaar: string, isNewMode: boolean = false, txnId?: string) {
   try {
     const [customers] = await db.query(
-      "SELECT c.*, b.name as branchName FROM Customer c LEFT JOIN Branch b ON c.branchId = b.id WHERE c.aadhaarNumber = ?",
+      "SELECT c.*, b.name as branchName, b.googleReviewUrl FROM Customer c LEFT JOIN Branch b ON c.branchId = b.id WHERE c.aadhaarNumber = ?",
       [aadhaar]
     );
     if ((customers as any[]).length === 0) return { success: false, message: "Customer not found" };
@@ -41,13 +41,13 @@ export async function getDraftTransaction(aadhaar: string, isNewMode: boolean = 
     let transactions: any[] = [];
     if (txnId) {
       const [txns] = await db.query(
-        "SELECT t.*, b.name as branchName FROM `Transaction` t LEFT JOIN Branch b ON t.branchId = b.id WHERE t.id = ?",
+        "SELECT t.*, b.name as branchName, b.googleReviewUrl FROM `Transaction` t LEFT JOIN Branch b ON t.branchId = b.id WHERE t.id = ?",
         [txnId]
       );
       transactions = txns as any[];
     } else if (!isNewMode) {
       const [txns] = await db.query(
-        "SELECT t.*, b.name as branchName FROM `Transaction` t LEFT JOIN Branch b ON t.branchId = b.id WHERE t.customerId = ? AND t.status = 'PENDING' ORDER BY t.createdAt DESC LIMIT 1",
+        "SELECT t.*, b.name as branchName, b.googleReviewUrl FROM `Transaction` t LEFT JOIN Branch b ON t.branchId = b.id WHERE t.customerId = ? AND t.status = 'PENDING' ORDER BY t.createdAt DESC LIMIT 1",
         [customer.id]
       );
       transactions = txns as any[];
@@ -73,6 +73,7 @@ export async function getDraftTransaction(aadhaar: string, isNewMode: boolean = 
       signature: null,
       branchId: customer.branchId,
       branchName: customer.branchName || "Main Branch",
+      googleReviewUrl: customer.googleReviewUrl || null,
     };
 
     // Get documents (Customer Photo usually saved even without transaction)
@@ -106,6 +107,7 @@ export async function getDraftTransaction(aadhaar: string, isNewMode: boolean = 
       draftData.addAmount = txn.addAmount || 0;
       draftData.branchId = txn.branchId;
       draftData.branchName = txn.branchName || "Main Branch";
+      draftData.googleReviewUrl = txn.googleReviewUrl || draftData.googleReviewUrl;
       
       const [items] = await db.query("SELECT * FROM GoldItem WHERE transactionId = ?", [txn.id]);
       draftData.goldItems = (items as any[]).map((item: any) => ({

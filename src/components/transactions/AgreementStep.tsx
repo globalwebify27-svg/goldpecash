@@ -59,6 +59,7 @@ export default function AgreementStep({ onPrev, data, user }: any) {
     }
 
     const totalWeight = data.goldItems ? data.goldItems.reduce((acc: number, item: any) => acc + (parseFloat(item.gross) || 0), 0) : 0;
+    const reviewBlock = data.googleReviewUrl ? `\n\n⭐ *Please leave us a review on Google*:\n${data.googleReviewUrl}` : "";
     const message = `Dear ${data.fullName},
 
 Thank you for transacting with GPC Ornaments (OPC) Private Limited.
@@ -69,7 +70,7 @@ Thank you for transacting with GPC Ornaments (OPC) Private Limited.
 *Status*: COMPLETED
 
 You can view and print your digitally signed purchase agreement here:
-${window.location.origin}/public/agreement?txnId=${data.transactionId}
+${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/public/agreement?txnId=${data.transactionId}${reviewBlock}
 
 Know the latest rate of gold and silver: https://goldpecash.com/
 
