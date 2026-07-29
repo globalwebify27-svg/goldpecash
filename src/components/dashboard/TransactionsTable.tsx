@@ -122,6 +122,8 @@ export default function TransactionsTable({ transactions, branches, userRole, us
       phone = `91${phone}`;
     }
 
+    const reviewBlock = tx.googleReviewUrl ? `\n\n⭐ *Please leave us a review on Google*:\n${tx.googleReviewUrl}` : "";
+
     const message = `Dear ${tx.customerName},
 
 Thank you for transacting with GPC Ornaments (OPC) Private Limited.
@@ -132,7 +134,7 @@ Thank you for transacting with GPC Ornaments (OPC) Private Limited.
 *Status*: ${tx.status}
 
 You can view and print your digitally signed purchase agreement here:
-${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/public/agreement?txnId=${tx.id}
+${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/public/agreement?txnId=${tx.id}${reviewBlock}
 
 Know the latest rate of gold and silver: https://goldpecash.com/
 

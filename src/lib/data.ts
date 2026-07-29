@@ -187,6 +187,7 @@ export async function getAllTransactions(branchId?: string) {
         c.customerCode,
         c.aadhaarNumber,
         c.mobile,
+        b.googleReviewUrl,
         (
           SELECT GROUP_CONCAT(CONCAT(gi.ornamentName, ' (', gi.goldType, ')') SEPARATOR ', ')
           FROM GoldItem gi
@@ -209,6 +210,7 @@ export async function getAllTransactions(branchId?: string) {
         ) as silverWeight
       FROM Transaction t
       JOIN Customer c ON t.customerId = c.id
+      LEFT JOIN Branch b ON t.branchId = b.id
       ${whereClause}
       ORDER BY t.createdAt DESC
     `, params);

@@ -59,6 +59,7 @@ export default function NewTransactionPage() {
     transactionId: null,
     branchId: "",
     branchName: "",
+    googleReviewUrl: "",
   });
 
   const [saving, setSaving] = useState(false);
