@@ -3,9 +3,23 @@
 import crypto from "crypto";
 import db from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { auth } from "@/auth";
+import { getDashboardStats } from "@/lib/data";
+
+async function checkSuperAdmin() {
+  const session = await auth();
+  if (!session?.user || (session.user as any)?.role !== "SUPER_ADMIN") {
+    return false;
+  }
+  return true;
+}
 
 export async function createBranchAction(formData: FormData) {
   try {
+    if (!(await checkSuperAdmin())) {
+      return { success: false, message: "Unauthorized action" };
+    }
+
     const name = formData.get("name") as string;
     const code = formData.get("code") as string;
     const phone = formData.get("phone") as string;
@@ -40,6 +54,10 @@ export async function createBranchAction(formData: FormData) {
 
 export async function updateBranchAction(branchId: string, formData: FormData) {
   try {
+    if (!(await checkSuperAdmin())) {
+      return { success: false, message: "Unauthorized action" };
+    }
+
     const name = formData.get("name") as string;
     const code = formData.get("code") as string;
     const phone = formData.get("phone") as string;
@@ -68,10 +86,14 @@ export async function updateBranchAction(branchId: string, formData: FormData) {
     return { success: false, message: "Something went wrong" };
   }
 }
-import { getDashboardStats } from "@/lib/data";
 
 export async function getBranchStatsAction(branchId: string) {
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return { success: false, message: "Unauthorized" };
+    }
+
     const stats = await getDashboardStats(branchId);
     return { success: true, stats };
   } catch (error) {
@@ -82,6 +104,10 @@ export async function getBranchStatsAction(branchId: string) {
 
 export async function deleteBranchAction(branchId: string) {
   try {
+    if (!(await checkSuperAdmin())) {
+      return { success: false, message: "Unauthorized action" };
+    }
+
     await db.query("DELETE FROM Branch WHERE id = ?", [branchId]);
     revalidatePath("/branches");
     return { success: true };
@@ -90,4 +116,3 @@ export async function deleteBranchAction(branchId: string) {
     return { success: false, message: "Failed to delete branch: " + error.message };
   }
 }
-

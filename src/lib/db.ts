@@ -13,7 +13,6 @@ const pool = globalForDb.connPool ?? mysql.createPool({
   queueLimit: 0,
 });
 
-if (process.env.NODE_ENV !== "production") globalForDb.connPool = pool;
+globalForDb.connPool = pool;
 
 export default pool;
-

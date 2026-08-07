@@ -1,9 +1,3 @@
-import { 
-  Users, 
-  Search, 
-  Filter, 
-  Download, 
-} from "lucide-react";
 import { getCustomers, getBranches } from "@/lib/data";
 import { auth } from "@/auth";
 import CustomerTable from "@/components/dashboard/CustomerTable";
@@ -26,7 +20,6 @@ export default async function CustomersPage() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Customers</h1>
           <p className="text-slate-500 dark:text-slate-400">Manage and view all onboarded customers across branches.</p>
         </div>
-
       </div>
 
       <CustomerTable 
@@ -38,4 +31,3 @@ export default async function CustomersPage() {
     </div>
   );
 }
-

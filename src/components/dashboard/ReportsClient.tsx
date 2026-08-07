@@ -43,18 +43,51 @@ export default function ReportsClient({
 }: ReportsClientProps) {
   const [timeframe, setTimeframe] = useState<"daily" | "weekly" | "monthly">("daily");
   const [selectedBranch, setSelectedBranch] = useState("ALL");
+  const [dateRangeOption, setDateRangeOption] = useState<"ALL" | "TODAY" | "MONTHLY" | "CUSTOM">("ALL");
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  });
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
 
-  // Get active revenue data based on timeframe
-  const revenueData = timeframe === "daily" 
-    ? dailyRevenue 
-    : timeframe === "weekly" 
-      ? weeklyRevenue 
-      : monthlyRevenue;
+  // Filter transactions by branch & date range
+  const filteredTxns = transactions.filter(tx => {
+    if (selectedBranch !== "ALL" && tx.branchId !== selectedBranch) {
+      return false;
+    }
 
-  // Filter transactions by branch if selected (for SUPER_ADMIN)
-  const filteredTxns = transactions.filter(tx => 
-    selectedBranch === "ALL" || tx.branchId === selectedBranch
-  );
+    if (!tx.createdAt) return true;
+    const txDate = new Date(tx.createdAt);
+
+    if (dateRangeOption === "TODAY") {
+      const today = new Date();
+      return txDate.getFullYear() === today.getFullYear() &&
+             txDate.getMonth() === today.getMonth() &&
+             txDate.getDate() === today.getDate();
+    }
+
+    if (dateRangeOption === "MONTHLY") {
+      if (!selectedMonth) return true;
+      const [year, month] = selectedMonth.split("-").map(Number);
+      return txDate.getFullYear() === year && (txDate.getMonth() + 1) === month;
+    }
+
+    if (dateRangeOption === "CUSTOM") {
+      if (startDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        if (txDate < start) return false;
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        if (txDate > end) return false;
+      }
+    }
+
+    return true;
+  });
 
   // Calculate totals from filtered transactions
   const filteredTotalPayout = filteredTxns
@@ -104,7 +137,8 @@ export default function ReportsClient({
       })
     ].join("\n");
 
-    const filename = `reports_export_${selectedBranch.toLowerCase()}_${new Date().toISOString().slice(0,10)}.csv`;
+    const dateSuffix = dateRangeOption === "TODAY" ? "_today" : dateRangeOption === "MONTHLY" ? `_${selectedMonth}` : dateRangeOption === "CUSTOM" ? `_${startDate || 'start'}_to_${endDate || 'end'}` : "_all";
+    const filename = `reports_export_${selectedBranch.toLowerCase()}${dateSuffix}_${new Date().toISOString().slice(0,10)}.csv`;
 
     // Check if running inside Flutter Webview
     if (typeof window !== 'undefined' && (window as any).FlutterDownloadChannel) {
@@ -126,6 +160,13 @@ export default function ReportsClient({
     link.click();
     document.body.removeChild(link);
   };
+
+  // Get active revenue data based on timeframe
+  const revenueData = timeframe === "daily" 
+    ? dailyRevenue 
+    : timeframe === "weekly" 
+      ? weeklyRevenue 
+      : monthlyRevenue;
 
   // Find max value for SVG chart scaling
   const maxAmount = Math.max(...revenueData.map(d => parseFloat(d.amount) || 0), 1000);
@@ -158,20 +199,64 @@ export default function ReportsClient({
           <p className="text-slate-500 dark:text-slate-400">View real-time branch performance, payouts, and download transaction logs.</p>
         </div>
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {userRole === "SUPER_ADMIN" && (
             <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-sm">
               <Filter className="w-4 h-4 text-slate-400" />
               <select 
                 value={selectedBranch}
                 onChange={(e) => setSelectedBranch(e.target.value)}
-                className="bg-transparent border-none outline-none font-semibold text-slate-700 dark:text-slate-300 pr-4"
+                className="bg-transparent border-none outline-none font-semibold text-slate-700 dark:text-slate-300 pr-4 cursor-pointer"
               >
                 <option value="ALL">All Branches</option>
                 {branches.map(b => (
                   <option key={b.id} value={b.id}>{b.name}</option>
                 ))}
               </select>
+            </div>
+          )}
+
+          {/* Date Filter Dropdown */}
+          <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-sm">
+            <Calendar className="w-4 h-4 text-slate-400" />
+            <select 
+              value={dateRangeOption}
+              onChange={(e) => setDateRangeOption(e.target.value as any)}
+              className="bg-transparent border-none outline-none font-semibold text-slate-700 dark:text-slate-300 pr-2 cursor-pointer"
+            >
+              <option value="ALL">All Time</option>
+              <option value="TODAY">Today (Now)</option>
+              <option value="MONTHLY">Monthly</option>
+              <option value="CUSTOM">Custom Date Range</option>
+            </select>
+          </div>
+
+          {/* Monthly Month Picker */}
+          {dateRangeOption === "MONTHLY" && (
+            <input 
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300 outline-none"
+            />
+          )}
+
+          {/* Custom Date Range Picker */}
+          {dateRangeOption === "CUSTOM" && (
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1 text-xs">
+              <input 
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="bg-transparent border-none outline-none font-semibold text-slate-700 dark:text-slate-300"
+              />
+              <span className="text-slate-400 font-bold">to</span>
+              <input 
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="bg-transparent border-none outline-none font-semibold text-slate-700 dark:text-slate-300"
+              />
             </div>
           )}
 

@@ -239,7 +239,8 @@ export async function saveTransactionDraft(data: any) {
       const [branches] = await db.query("SELECT name FROM Branch WHERE id = ?", [branchId]);
       const branchName = (branches as any[]).length > 0 ? (branches as any[])[0].name : "Main Branch";
       const cleanBranch = branchName.replace(/\s+/g, "").replace(/branch/gi, "");
-      transactionNumber = `GPC/${cleanBranch}/2026/${Math.floor(10000 + Math.random() * 90000)}`;
+      const currentYear = new Date().getFullYear();
+      transactionNumber = `GPC/${cleanBranch}/${currentYear}/${Math.floor(100000 + Math.random() * 900000)}`;
       await db.query(
         "INSERT INTO `Transaction` (id, transactionNumber, customerId, branchId, createdBy, status, updatedAt) VALUES (?, ?, ?, ?, ?, ?, NOW(3))",
         [transactionId, transactionNumber, customerId, branchId, createdBy, "PENDING"]

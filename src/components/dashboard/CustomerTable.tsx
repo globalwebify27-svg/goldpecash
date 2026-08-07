@@ -294,7 +294,7 @@ export default function CustomerTable({ customers, branches, userRole, userBranc
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500 italic">
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500 italic">
                     No customers onboarded yet.
                   </td>
                 </tr>

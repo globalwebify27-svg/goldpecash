@@ -2,6 +2,7 @@
 
 import { Bell, Search, User, Menu, X } from "lucide-react";
 import { useState } from "react";
+import Image from "next/image";
 import Sidebar from "./Sidebar";
 import ThemeToggle from "./ThemeToggle";
 
@@ -69,7 +70,7 @@ export default function Header({ user }: { user: any }) {
           <div className="flex flex-col h-full">
             <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <img src="/logo.webp" alt="Logo" className="w-8 h-8 rounded-lg" />
+                <Image src="/logo.webp" alt="Logo" width={32} height={32} className="w-8 h-8 rounded-lg" />
                 <span className="font-bold">Gol Pe Cash</span>
               </div>
               <button 

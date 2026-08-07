@@ -4,9 +4,20 @@ import crypto from "crypto";
 import db from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
+import { auth } from "@/auth";
+
+async function getSessionUser() {
+  const session = await auth();
+  return session?.user || null;
+}
 
 export async function createUserAction(formData: FormData) {
   try {
+    const user = await getSessionUser();
+    if (!user || (user as any).role !== "SUPER_ADMIN") {
+      return { success: false, message: "Unauthorized action" };
+    }
+
     const name = formData.get("name") as string;
     const email = formData.get("email") as string;
     const phone = formData.get("phone") as string;
@@ -42,6 +53,11 @@ export async function createUserAction(formData: FormData) {
 
 export async function updateProfileAction(userId: string, data: { name: string; email: string; phone: string }) {
   try {
+    const user = await getSessionUser();
+    if (!user || (user.id !== userId && (user as any).role !== "SUPER_ADMIN")) {
+      return { success: false, message: "Unauthorized action" };
+    }
+
     await db.query(
       "UPDATE User SET name = ?, email = ?, phone = ?, updatedAt = NOW(3) WHERE id = ?",
       [data.name, data.email, data.phone, userId]
@@ -55,6 +71,11 @@ export async function updateProfileAction(userId: string, data: { name: string; 
 
 export async function updatePasswordAction(userId: string, data: { current: string; new: string }) {
   try {
+    const user = await getSessionUser();
+    if (!user || (user.id !== userId && (user as any).role !== "SUPER_ADMIN")) {
+      return { success: false, message: "Unauthorized action" };
+    }
+
     const [rows]: any = await db.query("SELECT password FROM User WHERE id = ?", [userId]);
     if (rows.length === 0) return { success: false, message: "User not found" };
 
@@ -73,6 +94,11 @@ export async function updatePasswordAction(userId: string, data: { current: stri
 
 export async function updateBranchAction(branchId: string, data: { name: string; address: string; phone: string; email: string }) {
   try {
+    const user = await getSessionUser();
+    if (!user || (user as any).role !== "SUPER_ADMIN") {
+      return { success: false, message: "Unauthorized action" };
+    }
+
     await db.query(
       "UPDATE Branch SET name = ?, address = ?, phone = ?, email = ?, updatedAt = NOW(3) WHERE id = ?",
       [data.name, data.address, data.phone, data.email, branchId]
@@ -87,6 +113,11 @@ export async function updateBranchAction(branchId: string, data: { name: string;
 
 export async function updateUserAction(userId: string, formData: FormData) {
   try {
+    const user = await getSessionUser();
+    if (!user || (user as any).role !== "SUPER_ADMIN") {
+      return { success: false, message: "Unauthorized action" };
+    }
+
     const name = formData.get("name") as string;
     const email = formData.get("email") as string;
     const phone = formData.get("phone") as string;
@@ -126,6 +157,11 @@ export async function updateUserAction(userId: string, formData: FormData) {
 
 export async function toggleUserStatusAction(userId: string, currentStatus: string) {
   try {
+    const user = await getSessionUser();
+    if (!user || (user as any).role !== "SUPER_ADMIN") {
+      return { success: false, message: "Unauthorized action" };
+    }
+
     const newStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
     await db.query("UPDATE User SET status = ?, updatedAt = NOW(3) WHERE id = ?", [newStatus, userId]);
     revalidatePath("/users");
@@ -138,6 +174,11 @@ export async function toggleUserStatusAction(userId: string, currentStatus: stri
 
 export async function deleteUserAction(userId: string) {
   try {
+    const user = await getSessionUser();
+    if (!user || (user as any).role !== "SUPER_ADMIN") {
+      return { success: false, message: "Unauthorized action" };
+    }
+
     await db.query("DELETE FROM User WHERE id = ?", [userId]);
     revalidatePath("/users");
     return { success: true };
@@ -146,5 +187,3 @@ export async function deleteUserAction(userId: string) {
     return { success: false, message: "Failed to delete user: " + error.message };
   }
 }
-
-

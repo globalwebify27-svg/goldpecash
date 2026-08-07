@@ -40,9 +40,11 @@ export default function Sidebar({ user, isMobile }: { user: any; isMobile?: bool
     <aside className={asideClasses}>
       {!isMobile && (
         <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">
-          <img 
+          <Image 
             src="/logo.webp" 
             alt="Logo" 
+            width={40}
+            height={40}
             className="w-10 h-10 rounded-lg"
           />
           <div>
