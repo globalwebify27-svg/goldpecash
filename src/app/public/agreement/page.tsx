@@ -136,6 +136,7 @@ export default function PublicAgreementPage(props: PublicAgreementPageProps) {
           <img src="/logo.webp" alt="Gold Pe Cash" className="h-12 mx-auto object-contain mb-1" />
           <p className="text-[11px] font-bold uppercase text-slate-800 dark:text-slate-100">GPC ORNAMENTS (OPC) PRIVATE LIMITED</p>
           <p className="text-[9px] font-bold tracking-widest uppercase text-slate-500">Premium Gold Buying Service</p>
+          <p className="text-[10px] font-bold text-slate-500 mt-0.5 mb-0.5">GSTIN: 20AALCG8683M1Z1</p>
           <p className="text-[10px] text-slate-400">Authorized Branch: {data.branchName} | Agreement: Digitally Signed</p>
         </div>
 

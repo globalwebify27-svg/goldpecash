@@ -114,8 +114,9 @@ Thank you for choosing Gold Pe Cash!`;
       <div id="printable-agreement" className={`max-w-2xl mx-auto glass p-6 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-4 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 ${completed ? 'hidden print:block' : ''}`}>
         <div className="text-center border-b pb-4 pt-4">
           <img src="/logo.webp" alt="Gold Pe Cash" className="h-14 mx-auto object-contain mb-1" />
-          <p className="text-[11px] font-bold uppercase text-slate-800 dark:text-slate-100">GPC ORNAMANETS (OPC) PRIVATE LIMITED</p>
+          <p className="text-[11px] font-bold uppercase text-slate-800 dark:text-slate-100">GPC ORNAMENTS (OPC) PRIVATE LIMITED</p>
           <p className="text-[9px] font-bold tracking-widest uppercase text-slate-500">Premium Gold Buying Service</p>
+          <p className="text-[10px] font-bold text-slate-500">GSTIN: 20AALCG8683M1Z1</p>
           <p className="text-[10px] text-slate-400">Authorized Branch: {data.branchName || user?.branchName || "Main Branch"} | Agreement: Pending</p>
         </div>
 
