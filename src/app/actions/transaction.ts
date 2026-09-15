@@ -165,13 +165,24 @@ export async function saveCustomer(data: any) {
 
     // Find or Create Customer
     const [existingCustomers] = await db.query(
-      "SELECT id FROM Customer WHERE aadhaarNumber = ?",
-      [aadhaarNumber]
+      "SELECT id, aadhaarNumber, mobile FROM Customer WHERE aadhaarNumber = ? OR mobile = ?",
+      [aadhaarNumber, mobile]
     );
 
     let customerId;
+    
     if ((existingCustomers as any[]).length > 0) {
-      customerId = (existingCustomers as any[])[0].id;
+      if ((existingCustomers as any[]).length > 1) {
+        return { success: false, error: "The provided Aadhaar number and Mobile number belong to different existing customers. Please verify the details." };
+      }
+
+      const existing = (existingCustomers as any[])[0];
+
+      if (existing.aadhaarNumber !== aadhaarNumber) {
+        return { success: false, error: "This mobile number is already registered with a different Aadhaar number." };
+      }
+      
+      customerId = existing.id;
       // Update existing customer info
       await db.query(
         "UPDATE Customer SET fullName = ?, dob = ?, gender = ?, mobile = ?, address = ?, currentAddress = ?, refName = ?, refMobile = ?, refRelation = ?, branchId = ?, updatedAt = NOW(3) WHERE id = ?",

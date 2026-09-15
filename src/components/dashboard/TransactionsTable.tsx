@@ -314,8 +314,8 @@ Thank you for choosing Gold Pe Cash!`;
       </div>
 
       {/* Desktop Table View */}
-      <div className="overflow-x-auto hidden md:block">
-        <table className="w-full text-left">
+      <div className="overflow-x-auto hidden md:block hover:[animation-play-state:paused] group/table">
+        <table className="w-full text-left hover:[animation-play-state:paused]">
           <thead>
             <tr className="bg-slate-50/50 dark:bg-slate-900/50 text-[10px] uppercase font-bold text-slate-400 tracking-widest">
               <th className="px-6 py-4">Transaction ID</th>
