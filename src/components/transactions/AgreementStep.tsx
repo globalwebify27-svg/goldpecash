@@ -15,7 +15,7 @@ export default function AgreementStep({ onPrev, data, user }: any) {
 
   const subtotal = data.goldItems ? data.goldItems.reduce((acc: number, item: any) => {
     const netWeight = (parseFloat(item.gross) || 0) - (parseFloat(item.stone) || 0);
-    return acc + (netWeight * (parseFloat(item.rate) || 0) * (parseFloat(item.purity) / 100));
+    return acc + (netWeight * (parseFloat(item.rate) || 0) * ((parseFloat(item.purity) || 0) / 100));
   }, 0) : 0;
   const lessAmount = subtotal * ((data.lessPercent || 0) / 100);
 

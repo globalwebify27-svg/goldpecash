@@ -363,31 +363,75 @@ export async function saveTransactionPhotos(transactionId: string, customerId: s
   }
 }
 
-export async function saveTransactionValuation(transactionId: string, goldItems: any[], totalPayout: number, paymentMethod: string = "CASH", lessPercent: number = 0, addAmount: number = 0) {
+export async function saveTransactionValuation(
+  transactionId: string, 
+  goldItems: any[], 
+  totalPayout: number = 0, 
+  paymentMethod: string = "CASH", 
+  lessPercent: number = 0, 
+  addAmount: number = 0
+) {
   try {
-    // Calculate summaries
-    const totalWeight = goldItems.reduce((sum: number, item: any) => sum + (parseFloat(item.gross) || 0), 0);
-    const avgPurity = goldItems.length > 0 
-      ? goldItems.reduce((sum: number, item: any) => sum + (parseFloat(item.purity) || 0), 0) / goldItems.length 
+    const cleanLessPercent = isNaN(Number(lessPercent)) ? 0 : Number(lessPercent);
+    const cleanAddAmount = isNaN(Number(addAmount)) ? 0 : Number(addAmount);
+    const cleanTotalPayout = isNaN(Number(totalPayout)) ? 0 : Number(totalPayout);
+
+    // Calculate summaries safely
+    const totalWeight = goldItems.reduce((sum: number, item: any) => {
+      const g = parseFloat(item.gross);
+      return sum + (isNaN(g) ? 0 : g);
+    }, 0);
+
+    const validPurities = goldItems
+      .map((item: any) => parseFloat(item.purity))
+      .filter((p: number) => !isNaN(p) && p > 0);
+
+    const avgPurity = validPurities.length > 0 
+      ? validPurities.reduce((sum: number, p: number) => sum + p, 0) / validPurities.length 
       : 0;
 
     await db.query(
       "UPDATE `Transaction` SET totalWeight = ?, purity = ?, finalAmount = ?, paymentMethod = ?, lessPercent = ?, addAmount = ?, updatedAt = NOW(3) WHERE id = ?",
-      [totalWeight, avgPurity, totalPayout, paymentMethod, lessPercent, addAmount, transactionId]
+      [
+        isNaN(totalWeight) ? 0 : Number(totalWeight.toFixed(3)),
+        isNaN(avgPurity) ? 0 : Number(avgPurity.toFixed(2)),
+        cleanTotalPayout,
+        paymentMethod || "CASH",
+        cleanLessPercent,
+        cleanAddAmount,
+        transactionId
+      ]
     );
 
     // Delete old items if any (re-saving draft)
     await db.query("DELETE FROM GoldItem WHERE transactionId = ?", [transactionId]);
 
-    // Insert new items
+    // Insert new items with guaranteed non-NaN values
     for (const item of goldItems) {
-      const netWeight = (parseFloat(item.gross) || 0) - (parseFloat(item.stone) || 0);
-      const baseValue = netWeight * (parseFloat(item.rate) || 0) * ((parseFloat(item.purity) || 0) / 100);
-      const finalValue = baseValue;
+      const gross = isNaN(parseFloat(item.gross)) ? 0 : parseFloat(item.gross);
+      const stone = isNaN(parseFloat(item.stone)) ? 0 : parseFloat(item.stone);
+      const netWeight = Math.max(0, gross - stone);
+      const purity = isNaN(parseFloat(item.purity)) ? 0 : parseFloat(item.purity);
+      const rate = isNaN(parseFloat(item.rate)) ? 0 : parseFloat(item.rate);
+      const baseValue = netWeight * rate * (purity / 100);
+      const finalValue = isNaN(baseValue) ? 0 : Number(baseValue.toFixed(2));
 
       await db.query(
         "INSERT INTO GoldItem (id, transactionId, goldType, ornamentName, grossWeight, stoneWeight, netWeight, purity, ratePerGram, lessPercent, addAmount, finalValue) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [crypto.randomUUID(), transactionId, item.metal || "GOLD", item.type, parseFloat(item.gross), parseFloat(item.stone), netWeight, parseFloat(item.purity), parseFloat(item.rate), 0, 0, finalValue]
+        [
+          crypto.randomUUID(), 
+          transactionId, 
+          item.metal || "GOLD", 
+          item.type || "Ornament", 
+          gross, 
+          stone, 
+          Number(netWeight.toFixed(3)), 
+          purity, 
+          rate, 
+          0, 
+          0, 
+          finalValue
+        ]
       );
     }
     return { success: true };

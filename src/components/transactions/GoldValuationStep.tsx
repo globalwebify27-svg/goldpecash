@@ -58,22 +58,32 @@ export default function GoldValuationStep({ onNext, onPrev, updateData, data, lo
 
   const calculateTotal = () => {
     const subtotal = items.reduce((acc: number, item: any) => {
-      const netWeight = (parseFloat(item.gross) || 0) - (parseFloat(item.stone) || 0);
-      const baseValue = netWeight * (parseFloat(item.rate) || 0) * ((parseFloat(item.purity) || 0) / 100);
-      return acc + baseValue;
+      const gross = parseFloat(item.gross);
+      const stone = parseFloat(item.stone);
+      const netWeight = Math.max(0, (isNaN(gross) ? 0 : gross) - (isNaN(stone) ? 0 : stone));
+      const rate = parseFloat(item.rate);
+      const purity = parseFloat(item.purity);
+      const baseValue = netWeight * (isNaN(rate) ? 0 : rate) * ((isNaN(purity) ? 0 : purity) / 100);
+      return acc + (isNaN(baseValue) ? 0 : baseValue);
     }, 0);
-    const lessVal = Math.min(3, parseFloat(lessPercent) || 0);
-    const addVal = parseFloat(addAmount) || 0;
-    return subtotal - (subtotal * (lessVal / 100)) + addVal;
+    const less = parseFloat(lessPercent);
+    const lessVal = Math.min(3, Math.max(0, isNaN(less) ? 0 : less));
+    const add = parseFloat(addAmount);
+    const addVal = isNaN(add) ? 0 : add;
+    const finalVal = subtotal - (subtotal * (lessVal / 100)) + addVal;
+    return isNaN(finalVal) ? 0 : Math.max(0, finalVal);
   };
 
   const handleNext = () => {
+    const total = calculateTotal();
+    const less = parseFloat(lessPercent);
+    const add = parseFloat(addAmount);
     const newData = { 
       goldItems: items, 
-      totalPayout: calculateTotal(), 
+      totalPayout: isNaN(total) ? 0 : total, 
       paymentMethod,
-      lessPercent: parseFloat(lessPercent) || 0,
-      addAmount: parseFloat(addAmount) || 0
+      lessPercent: isNaN(less) ? 0 : less,
+      addAmount: isNaN(add) ? 0 : add
     };
     updateData(newData);
     onNext(newData);
