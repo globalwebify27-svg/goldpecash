@@ -2,6 +2,7 @@
 
 import db from "@/lib/db";
 import { auth } from "@/auth";
+import { revalidatePath } from "next/cache";
 
 export async function searchCustomer(query: string) {
   try {
@@ -153,6 +154,15 @@ export async function saveCustomer(data: any) {
   try {
     const { aadhaarNumber, fullName, dob, gender, mobile, address, currentAddress, refName, refMobile, refRelation } = data;
     
+    const cleanedName = String(fullName || "").trim();
+    if (!cleanedName || cleanedName === "N/A") {
+      return { success: false, error: "Valid customer full name is required." };
+    }
+    const cleanedAddress = String(address || "").trim();
+    if (!cleanedAddress || cleanedAddress === "N/A") {
+      return { success: false, error: "Valid customer permanent address is required." };
+    }
+
     // Server-side session verification to enforce user's branch
     const session = await auth();
     const userRole = (session?.user as any)?.role;
@@ -186,14 +196,14 @@ export async function saveCustomer(data: any) {
       // Update existing customer info
       await db.query(
         "UPDATE Customer SET fullName = ?, dob = ?, gender = ?, mobile = ?, address = ?, currentAddress = ?, refName = ?, refMobile = ?, refRelation = ?, branchId = ?, updatedAt = NOW(3) WHERE id = ?",
-        [fullName, dob ? new Date(dob) : null, gender, mobile, address, currentAddress, refName || null, refMobile || null, refRelation || null, branchId, customerId]
+        [cleanedName, dob ? new Date(dob) : null, gender, mobile, cleanedAddress, currentAddress, refName || null, refMobile || null, refRelation || null, branchId, customerId]
       );
     } else {
       customerId = crypto.randomUUID();
       const customerCode = `CUST-${Math.floor(100000 + Math.random() * 900000)}`;
       await db.query(
         "INSERT INTO Customer (id, customerCode, aadhaarNumber, aadhaarVerified, fullName, dob, gender, mobile, address, currentAddress, refName, refMobile, refRelation, createdBy, branchId, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(3))",
-        [customerId, customerCode, aadhaarNumber, true, fullName, dob ? new Date(dob) : null, gender, mobile, address, currentAddress, refName || null, refMobile || null, refRelation || null, createdBy, branchId]
+        [customerId, customerCode, aadhaarNumber, true, cleanedName, dob ? new Date(dob) : null, gender, mobile, cleanedAddress, currentAddress, refName || null, refMobile || null, refRelation || null, createdBy, branchId]
       );
     }
 
@@ -201,6 +211,52 @@ export async function saveCustomer(data: any) {
   } catch (error) {
     console.error("Error saving customer:", error);
     return { success: false, error: (error as any).message };
+  }
+}
+
+export async function updateCustomerDetails(customerId: string, data: {
+  fullName: string;
+  address: string;
+  currentAddress?: string;
+  mobile?: string;
+  email?: string;
+  panNumber?: string;
+}) {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const cleanedName = String(data.fullName || "").trim();
+    if (!cleanedName || cleanedName === "N/A") {
+      return { success: false, error: "Valid customer full name is required." };
+    }
+
+    const cleanedAddress = String(data.address || "").trim();
+    if (!cleanedAddress || cleanedAddress === "N/A") {
+      return { success: false, error: "Valid customer permanent address is required." };
+    }
+
+    await db.query(
+      "UPDATE Customer SET fullName = ?, address = ?, currentAddress = ?, mobile = COALESCE(?, mobile), email = ?, panNumber = ?, updatedAt = NOW(3) WHERE id = ?",
+      [
+        cleanedName,
+        cleanedAddress,
+        data.currentAddress || null,
+        data.mobile || null,
+        data.email || null,
+        data.panNumber || null,
+        customerId
+      ]
+    );
+
+    revalidatePath("/customers");
+    revalidatePath("/transactions");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error updating customer details:", error);
+    return { success: false, error: error.message || "Failed to update customer details." };
   }
 }
 

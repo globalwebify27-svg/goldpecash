@@ -212,11 +212,15 @@ export default function CustomerTable({ customers, branches, userRole, userBranc
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${customer.isFraud ? 'bg-red-100 text-red-600' : 'bg-primary/10 text-primary'}`}>
-                        {customer.fullName.charAt(0)}
+                        {(customer.fullName || "C").charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <p className={`font-bold ${customer.isFraud ? 'text-red-600' : 'text-slate-900 dark:text-white'}`}>
-                          {customer.fullName}
+                          {customer.fullName === "N/A" || !customer.fullName ? (
+                            <span className="text-amber-600 dark:text-amber-400 font-semibold italic text-xs">N/A (Click View to Edit)</span>
+                          ) : (
+                            customer.fullName
+                          )}
                         </p>
                         <p className="text-xs text-slate-500">
                           {customer.customerCode} • {branches.find(b => b.id === customer.branchId)?.name || 'Unknown'}

@@ -76,13 +76,15 @@ export async function verifyAadhaarOtp(otp: string, referenceId: string) {
     });
 
     const data = await response.json();
+    console.log("Sandbox Aadhaar Verify Raw Response:", JSON.stringify(data, null, 2));
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to verify Aadhaar OTP");
     }
 
     return {
       success: true,
-      data: data.data, // Contains name, dob, gender, address, photo, etc.
+      data: data.data || data, // Contains name, dob, gender, address, photo, etc.
     };
   } catch (error: any) {
     console.error("Aadhaar Verify Error:", error);

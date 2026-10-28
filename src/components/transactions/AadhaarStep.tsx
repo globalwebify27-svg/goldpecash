@@ -85,6 +85,19 @@ export default function AadhaarStep({ onNext, updateData, data, jumpToStep }: an
     setLoading(false);
   };
 
+  const handleManualProceed = () => {
+    if (aadhaar.length !== 12) {
+      setError("Please enter a valid 12-digit Aadhaar number first.");
+      return;
+    }
+    updateData({
+      aadhaarNumber: aadhaar,
+      fullName: data.fullName && data.fullName !== "N/A" ? data.fullName : "",
+      address: data.address && data.address !== "N/A" ? data.address : "",
+    });
+    onNext();
+  };
+
   const handleVerifyOtp = async () => {
     if (otp.length !== 6 || loading) return;
     setLoading(true);
@@ -92,37 +105,67 @@ export default function AadhaarStep({ onNext, updateData, data, jumpToStep }: an
 
     const result = await verifyOtpAction(otp, referenceId, aadhaar);
     if (result.success) {
-      const kyc = result.data;
+      const kyc = result.data?.data || result.data || {};
       setVerified(true);
 
-      // Build address cleanly to prevent "undefined" strings
+      // Extract Name supporting multiple API key variations
+      const rawName = kyc.name || kyc.fullName || kyc.full_name || kyc.resident_name || kyc.user_full_name || kyc.name_on_card || "";
+      const resolvedName = (rawName && rawName !== "N/A" && rawName !== "null" && rawName !== "undefined") ? String(rawName).trim() : "";
+
+      // Build address cleanly supporting string, object, and split_address formats
       let resolvedAddress = "";
-      if (kyc.full_address) {
-        resolvedAddress = kyc.full_address;
-      } else if (kyc.address) {
-        const parts = [
-          kyc.address.house,
-          kyc.address.street,
-          kyc.address.landmark,
-          kyc.address.loc,
-          kyc.address.vtc,
-          kyc.address.post_office,
-          kyc.address.district,
-          kyc.address.state
-        ].filter(val => val && val !== "null" && val !== "undefined" && String(val).trim() !== "");
-        
-        resolvedAddress = parts.join(", ");
-        if (kyc.address.pincode) {
-          resolvedAddress += ` - ${kyc.address.pincode}`;
+      if (typeof kyc.full_address === "string" && kyc.full_address.trim() && kyc.full_address.trim() !== "N/A") {
+        resolvedAddress = kyc.full_address.trim();
+      } else if (typeof kyc.address === "string" && kyc.address.trim() && kyc.address.trim() !== "N/A") {
+        resolvedAddress = kyc.address.trim();
+      } else {
+        const addrObj = (typeof kyc.address === "object" && kyc.address !== null)
+          ? kyc.address
+          : (typeof kyc.split_address === "object" && kyc.split_address !== null)
+          ? kyc.split_address
+          : null;
+
+        if (addrObj) {
+          const parts = [
+            addrObj.care_of ? `C/O: ${addrObj.care_of}` : null,
+            addrObj.house,
+            addrObj.street,
+            addrObj.landmark,
+            addrObj.loc || addrObj.locality,
+            addrObj.vtc || addrObj.city,
+            addrObj.subdistrict || addrObj.sub_district || addrObj.taluk || addrObj.tehsil,
+            addrObj.post_office || addrObj.po,
+            addrObj.district,
+            addrObj.state
+          ].filter(val => val && val !== "null" && val !== "undefined" && String(val).trim() !== "");
+          
+          resolvedAddress = parts.join(", ");
+          const pin = addrObj.pincode || addrObj.pin || addrObj.postal_code;
+          if (pin) {
+            resolvedAddress += ` - ${pin}`;
+          }
         }
       }
 
+      if (resolvedAddress === "N/A" || resolvedAddress === "null" || resolvedAddress === "undefined") {
+        resolvedAddress = "";
+      }
+
+      const rawDob = kyc.date_of_birth || kyc.dob || (kyc.year_of_birth ? `${kyc.year_of_birth}-01-01` : "");
+      const resolvedDob = (rawDob && rawDob !== "N/A") ? String(rawDob).trim() : "";
+
+      const rawGender = kyc.gender || "";
+      const resolvedGender = (rawGender && rawGender !== "N/A") ? String(rawGender).trim() : "";
+
+      const photoUrl = kyc.photo || kyc.image || kyc.profile_image || null;
+
       updateData({
         aadhaarNumber: aadhaar,
-        fullName: kyc.name || kyc.fullName || kyc.full_name || "N/A",
-        dob: kyc.date_of_birth || kyc.dob || "",
-        gender: kyc.gender || "N/A",
-        address: resolvedAddress || "N/A",
+        fullName: resolvedName,
+        dob: resolvedDob,
+        gender: resolvedGender,
+        address: resolvedAddress,
+        ...(photoUrl ? { photo: photoUrl.startsWith("data:") ? photoUrl : `data:image/jpeg;base64,${photoUrl}` } : {})
       });
     } else {
       setError(result.message || "Invalid OTP or verification failed.");
@@ -186,9 +229,23 @@ export default function AadhaarStep({ onNext, updateData, data, jumpToStep }: an
       )}
 
       {error && (
-        <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 text-red-600 rounded-xl text-sm animate-in shake duration-300">
-          <AlertCircle className="w-4 h-4" />
-          <p className="font-medium">{error}</p>
+        <div className="p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-2xl space-y-3 animate-in shake duration-300 max-w-md mx-auto">
+          <div className="flex items-start gap-2.5 text-red-600">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-bold">Aadhaar OTP Service Unavailable</p>
+              <p className="text-xs mt-1 text-red-700/80 dark:text-red-300 leading-relaxed">{error}</p>
+            </div>
+          </div>
+          {aadhaar.length === 12 && (
+            <button
+              type="button"
+              onClick={handleManualProceed}
+              className="w-full py-2.5 px-4 bg-primary text-primary-foreground hover:brightness-110 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm"
+            >
+              Proceed with In-Store Manual Verification &rarr;
+            </button>
+          )}
         </div>
       )}
 
@@ -216,6 +273,17 @@ export default function AadhaarStep({ onNext, updateData, data, jumpToStep }: an
                 </button>
               )}
             </div>
+            {aadhaar.length === 12 && !otpSent && (
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={handleManualProceed}
+                  className="text-xs text-slate-500 hover:text-primary transition-all font-semibold underline underline-offset-4"
+                >
+                  Skip OTP & Verify In-Store (Manual Entry)
+                </button>
+              </div>
+            )}
           </div>
 
           {otpSent && (
@@ -275,10 +343,22 @@ export default function AadhaarStep({ onNext, updateData, data, jumpToStep }: an
           
           <div className="max-w-sm mx-auto p-4 bg-white dark:bg-slate-900 rounded-xl border border-green-100 dark:border-green-900/30 text-left space-y-2">
             <p className="text-xs text-slate-500 uppercase tracking-wider font-bold">Name</p>
-            <p className="font-bold">{data.fullName}</p>
+            {data.fullName && data.fullName !== "N/A" ? (
+              <p className="font-bold">{data.fullName}</p>
+            ) : (
+              <p className="text-xs text-amber-600 dark:text-amber-400 font-medium italic">
+                Not returned by Aadhaar API — you can enter it in the next step
+              </p>
+            )}
             <div className="h-[1px] bg-slate-100 dark:bg-slate-800"></div>
             <p className="text-xs text-slate-500 uppercase tracking-wider font-bold">Address</p>
-            <p className="text-sm">{data.address}</p>
+            {data.address && data.address !== "N/A" ? (
+              <p className="text-sm">{data.address}</p>
+            ) : (
+              <p className="text-xs text-amber-600 dark:text-amber-400 font-medium italic">
+                Not returned by Aadhaar API — you can enter it in the next step
+              </p>
+            )}
           </div>
 
           <button onClick={onNext} className="btn-primary w-full max-w-sm mx-auto py-3">

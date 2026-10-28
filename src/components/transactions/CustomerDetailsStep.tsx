@@ -110,8 +110,19 @@ export default function CustomerDetailsStep({ onNext, onPrev, updateData, data, 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setOtpError("");
+    const cleanedName = (data.fullName || "").trim();
+    if (!cleanedName || cleanedName === "N/A") {
+      setOtpError("Please enter the customer's Full Name.");
+      return;
+    }
+    const cleanedAddress = (data.address || "").trim();
+    if (!cleanedAddress || cleanedAddress === "N/A") {
+      setOtpError("Please enter the customer's Permanent Address.");
+      return;
+    }
     if (!isVerified) {
-      setOtpError("Please verify your mobile number first.");
+      setOtpError("Please enter a valid 10-digit mobile number.");
       return;
     }
     onNext();
@@ -129,16 +140,33 @@ export default function CustomerDetailsStep({ onNext, onPrev, updateData, data, 
         </div>
       </div>
 
+      {otpError && (
+        <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 text-red-600 rounded-xl text-sm animate-in shake duration-300">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <p className="font-medium">{otpError}</p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <label className="text-sm font-medium">Full Name (Auto-fetched)</label>
+          <div className="flex justify-between items-center">
+            <label className="text-sm font-medium">Customer Full Name <span className="text-red-500">*</span></label>
+            <span className="text-[10px] font-semibold text-primary/80 bg-primary/10 px-2 py-0.5 rounded">
+              Aadhaar Verified (Editable)
+            </span>
+          </div>
+          <div className="relative">
+            <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              readOnly
-              value={data.fullName || ""}
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 outline-none"
+              required
+              value={data.fullName === "N/A" ? "" : (data.fullName || "")}
+              onChange={(e) => updateData({ fullName: e.target.value })}
+              placeholder="e.g. Ramesh Kumar"
+              className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary outline-none transition-all"
             />
           </div>
+        </div>
   
           <div className="space-y-2">
             <label className="text-sm font-medium">Mobile Number</label>
@@ -241,13 +269,20 @@ export default function CustomerDetailsStep({ onNext, onPrev, updateData, data, 
 
           <div className="md:col-span-2 space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Aadhaar Address (Auto-fetched)</label>
+              <div className="flex justify-between items-center">
+                <label className="text-sm font-medium">Permanent Address (Aadhaar) <span className="text-red-500">*</span></label>
+                <span className="text-[10px] font-semibold text-primary/80 bg-primary/10 px-2 py-0.5 rounded">
+                  Aadhaar Verified (Editable)
+                </span>
+              </div>
               <div className="relative">
                 <MapPin className="absolute left-4 top-4 w-4 h-4 text-slate-400" />
                 <textarea
-                  readOnly
-                  value={data.address || ""}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 outline-none min-h-[80px]"
+                  required
+                  value={data.address === "N/A" ? "" : (data.address || "")}
+                  onChange={(e) => updateData({ address: e.target.value })}
+                  placeholder="Enter permanent address as per customer's Aadhaar"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary outline-none min-h-[80px] transition-all"
                 />
               </div>
             </div>
